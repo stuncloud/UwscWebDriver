@@ -1,5 +1,248 @@
+
 module WebDriver
-    procedure WebDriver
-        
+    dim debug = FALSE
+    dim base = "http://127.0.0.1"
+    dim port = 9515
+    const Chrome  = "chromedriver.exe"
+    const Edge    = "MicrosoftWebDriver.exe"
+    const Firefox = "geckodriver.exe"
+
+    function Start(driverpath, port = 9515)
+        cmd = "<#DBL>" + driverpath + "<#DBL>"
+        if port <> this.port then
+            this.port = port
+            cmd = cmd + " --port=" + port
+        endif
+        doscmd(cmd, TRUE, TRUE)
+        sleep(1)
+        dim r
+        body = "{<#DBL>desiredCapabilities<#DBL>: {}, <#DBL>requiredCapabilities<#DBL>: {}}"
+        if _post(r, "/session", body) then
+            result = r.sessionId
+        endif
     fend
+    
+    function Navigate(sessionId, uri)
+        dim r
+        api  = "/session/" + sessionId + "/url"
+        body = "{<#DBL>url<#DBL>: <#DBL>" + uri + "<#DBL>}"
+        if _post(r, api, body) then
+            result = EMPTY
+        endif
+    fend
+
+    function GetURL(sessionId)
+        dim r
+        api  = "/session/" + sessionId + "/url"
+        body = EMPTY
+        if _get(r, api, body) then
+            result = r.value
+        endif
+    fend
+    
+    function FindElement(sessionId, selector)
+        dim r
+        api  = "/session/" + sessionId + "/element"
+        body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
+        if _post(r, api, body) then
+            result = r.value.ELEMENT
+        endif
+    fend
+
+    function FindElements(sessionId, selector)
+        dim r
+        api  = "/session/" + sessionId + "/elements"
+        body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
+        if _post(r, api, body) then
+            result = r.value.ELEMENT
+        endif
+    fend
+    
+    function SetValue(sessionId, elementId, text)
+        dim r
+        api  = "/session/" + sessionId + "/element/" + elementId + "/value"
+        body = "{<#DBL>value<#DBL>: [<#DBL>" + text + "<#DBL>]}"
+        if _post(r, api, body) then
+            result = EMPTY
+        endif
+    fend
+
+    function GetValue(sessionId, elementId)
+        dim r
+        api  = "/session/" + sessionId + "/element/" + elementId + "/value"
+        if _get(r, api) then
+            result = EMPTY
+        endif
+    fend
+    
+    function Click(sessionId, elementId)
+        dim r
+        api  = "/session/" + sessionId + "/element/" + elementId + "/click"
+        body = EMPTY
+        if _post(r, api, body) then
+            result = EMPTY
+        endif
+    fend
+
+    function GetText(sessionId, elementId)
+        dim r
+        api = "/session/" + sessionId + "/element/" + elementId + "/text"
+        if _get(r, api) then
+            result = r.value
+        endif
+    fend
+
+    function GetAttribute(sessionId, elementId, attribute)
+        dim r
+        api = "/session/" + sessionId + "/element/" + elementId + "/attribute/" + attribute
+        if _get(r, api) then
+            result = r.value
+        endif
+    fend
+
+    function Close(sessionId)
+        dim r
+        api  = "/session/" + sessionId
+        body = EMPTY
+        if _delete(r, api, body) then
+            result = EMPTY
+        endif
+    fend
+
+    function _get(var response, api, body = EMPTY)
+        result = _request(response, "GET", api, body)
+    fend
+    
+    function _post(var response, api, body = EMPTY)
+        result = _request(response, "POST", api, body)
+    fend
+    
+    function _delete(var response, api, body = EMPTY)
+        result = _request(response, "DELETE", api, body)
+    fend
+
+    function _request(var response, method, api, body = EMPTY)
+        hashtbl header
+        header["Content-Type"] = "text/plain; charset=UTF-8"
+        uri = base + ":" + port + api
+
+        xmlhttp = createoleobj("Msxml2.XMLHTTP")
+        xmlhttp.open(method, uri, FALSE)
+        for key in Header
+            xmlhttp.setRequestHeader(key, Header[key])
+        next
+        xmlhttp.send(body)
+
+        result = xmlhttp.status = 200
+        if result then
+            response = JSON.Parse(xmlhttp.responseText)
+        else
+            print "[error] " + xmlhttp.statusText + " (" + xmlhttp.status + ")"
+            print "[error] " + xmlhttp.responseText
+        endif
+
+        if debug then print "[debug] request : " + api
+        if debug then print "[debug] response: " + xmlhttp.responseText
+    fend
+    
+    procedure Debug()
+        debug = TRUE 
+    fend
+
+endmodule
+
+module JSON
+    procedure JSON
+        if fopen("json2.js", F_EXISTS) then
+            fid = fopen("json2.js", F_READ)
+            json2 = fget(fid, F_ALLTEXT)
+            fclose(fid)
+        else
+            msgbox("json2.jsがありません")
+            // exitexit
+        endif
+        ScriptControl = createoleobj("ScriptControl")
+        with ScriptControl
+            .Language = "JScript"
+            .ExecuteStatement(json2)
+            .ExecuteStatement(Statement)
+            CodeObject = .CodeObject
+        endwith
+        json2 = EMPTY
+    fend
+    
+    dim ScriptControl,CodeObject
+
+    function Parse(str)
+        try
+            result = CodeObject.JSON.parse(str)
+        except
+            result = NOTHING
+        endtry
+    fend
+    
+    function Stringify(json, indent = "", CRLF = FALSE)
+        try
+            result = CodeObject.JSON.stringify(json, null, indent)
+            if CRLF then
+                result = replace(result, chr(10), "<#CR>")
+            endif
+        except
+            result = EMPTY
+        endtry
+    fend
+
+    function AddObject(base, name, value)
+        try
+            CodeObject.Add(base, name, value)
+            result = TRUE
+        except
+            result = FALSE
+        endtry
+    fend
+    
+    function ReadFromFile(path)
+        result = EMPTY
+        if ! fopen(path, F_EXISTS) then exit
+
+        fid = fopen(path, F_READ)
+        str = fget(fid, F_ALLTEXT)
+        fclose(fid)
+        result = Parse(str)
+    fend
+
+    function SaveToFile(path, json, indent = "", writemode = F_WRITE8)
+        result = FALSE
+        str = Stringify(json, indent)
+        if str = EMPTY then exit
+        fid = fopen(path, writemode)
+        if fid = -1 then exit
+        fput(fid, str, F_ALLTEXT)
+        if ! fclose(fid) then exit
+        result = TRUE
+    fend
+
+    textblock Statement
+        // 配列アクセス用
+        // 第二引数に値を渡した場合は代入、省略した場合は値取得
+        Array.prototype.Item = function(i, value)
+        {
+            if (! value)
+                return this[i];
+            this[i] = value;
+        }
+        Array.prototype.item = Array.prototype.Item;
+
+        // Object追加用、AddObject()で使う
+        function Add(obj, name, value)
+        {
+            obj[name] = value;
+        }
+
+        Object.prototype.GetValue = function(name)
+        {
+            return this[name];
+        }
+    endtextblock
+    
 endmodule
