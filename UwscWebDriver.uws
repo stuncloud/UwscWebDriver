@@ -1,20 +1,22 @@
 
 module WebDriver
     dim debug = FALSE
-    dim base = "http://127.0.0.1"
-    dim port = 9515
+    dim port
     const Chrome  = "chromedriver.exe"
     const Edge    = "MicrosoftWebDriver.exe"
     const Firefox = "geckodriver.exe"
 
     function Start(driverpath, port = 9515)
-        cmd = "<#DBL>" + driverpath + "<#DBL>"
-        if port <> this.port then
-            this.port = port
-            cmd = cmd + " --port=" + port
+        cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port
+        this.port = port
+        if ! Process.Find(cmd) then
+            doscmd(cmd, TRUE, TRUE)
+            if ! Process.Wait(port) then
+                result = EMPTY
+                msgbox("WebDriverが起動していません")
+                exit
+            endif
         endif
-        doscmd(cmd, TRUE, TRUE)
-        sleep(1)
         dim r
         body = "{<#DBL>desiredCapabilities<#DBL>: {}, <#DBL>requiredCapabilities<#DBL>: {}}"
         if _post(r, "/session", body) then
@@ -54,7 +56,10 @@ module WebDriver
         api  = "/session/" + sessionId + "/elements"
         body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
         if _post(r, api, body) then
-            result = r.value.ELEMENT
+            result = safearray(0, r.value.length - 1)
+            for i = 0 to length(result) - 1
+                result[i] = r.value.item(i).ELEMENT
+            next
         endif
     fend
     
@@ -124,7 +129,9 @@ module WebDriver
     function _request(var response, method, api, body = EMPTY)
         hashtbl header
         header["Content-Type"] = "text/plain; charset=UTF-8"
-        uri = base + ":" + port + api
+        uri = "http://localhost:" + this.port + api
+        if debug then print "[debug] request url : " + uri
+        if debug then print "[debug] request body: " + body
 
         xmlhttp = createoleobj("Msxml2.XMLHTTP")
         xmlhttp.open(method, uri, FALSE)
@@ -140,15 +147,48 @@ module WebDriver
             print "[error] " + xmlhttp.statusText + " (" + xmlhttp.status + ")"
             print "[error] " + xmlhttp.responseText
         endif
+        if debug then print "[debug] response    : " + xmlhttp.responseText
 
-        if debug then print "[debug] request : " + api
-        if debug then print "[debug] response: " + xmlhttp.responseText
     fend
-    
+
     procedure Debug()
         debug = TRUE 
     fend
 
+endmodule
+
+module Process
+    dim locator
+
+    procedure Process
+        locator = createoleobj("WbemScripting.SWbemLocator")
+    fend
+    
+    function Find(cmd)
+        service = locator.ConnectServer()
+        q = service.ExecQuery("select CommandLine from win32_process where CommandLine like '%" + cmd + "%'")
+        result = q.Count
+    fend
+    
+    function FindListeningPort(port)
+        service = locator.ConnectServer(".", "Root\StandardCimv2")
+        q = service.ExecQuery("select LocalPort from MSFT_NetTCPConnection where LocalPort = " + port + " and state = 2")
+        result = q.Count
+    fend
+    
+
+    function Wait(port, timeout = 10)
+        limit = gettime() + timeout
+        repeat
+            if gettime() > limit then
+                result = FALSE
+                exit
+            else
+                sleep(0.5)
+            endif
+        until FindListeningPort(port) > 0
+        result = TRUE
+    fend
 endmodule
 
 module JSON
@@ -159,7 +199,7 @@ module JSON
             fclose(fid)
         else
             msgbox("json2.jsがありません")
-            // exitexit
+            exitexit
         endif
         ScriptControl = createoleobj("ScriptControl")
         with ScriptControl

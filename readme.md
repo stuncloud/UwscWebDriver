@@ -67,8 +67,11 @@ WebDriverを起動して、セッションIDを取得します
     省略可能  
     WebDriverの待受ポート番号を指定します  
     デフォルトは `9515` です
-- 戻り値  
-    sessionId
+- 戻り値
+    - 成功時  
+        sessionId
+    - 失敗時  
+        EMPTY
 
 #### WebDriver.Navigate(sessionId, uri)
 
@@ -110,7 +113,7 @@ cssセレクタを指定して対象エレメントのIDを配列で取得しま
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    elementIdの配列
+    elementIdの配列(safearray)
 
 #### WebDriver.SetValue(sessionId, elementId, text)
 
@@ -173,7 +176,8 @@ inputやselect等のvalueの値を取得します
 
 #### WebDriver.Close(sessionId)
 
-セッションを終了しブラウザを閉じます
+セッションを終了しブラウザを閉じます  
+WebDriverは起動したままなので、WebDriverを終了させたい場合は手動でコマンドプロンプトを閉じてください
 
 - sessionId  
     `WebDriver.Start` の戻り値
