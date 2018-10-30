@@ -7,6 +7,12 @@ module WebDriver
     const Firefox = "geckodriver.exe"
 
     function Start(driverpath, port = 9515)
+        if ! fopen(driverpath, F_EXISTS) then
+            result = EMPTY
+            msgbox("WebDriverが見つかりません: " + driverpath)
+            exit
+        endif
+        
         cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port
         this.port = port
         if ! Process.Find(cmd) then
@@ -45,6 +51,7 @@ module WebDriver
     function FindElement(sessionId, selector)
         dim r
         api  = "/session/" + sessionId + "/element"
+        selector = replace(selector, "<#DBL>", "\<#DBL>")
         body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
         if _post(r, api, body) then
             result = r.value.ELEMENT
@@ -54,6 +61,7 @@ module WebDriver
     function FindElements(sessionId, selector)
         dim r
         api  = "/session/" + sessionId + "/elements"
+        selector = replace(selector, "<#DBL>", "\<#DBL>")
         body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
         if _post(r, api, body) then
             result = safearray(0, r.value.length - 1)
@@ -144,6 +152,7 @@ module WebDriver
         if result then
             response = JSON.Parse(xmlhttp.responseText)
         else
+            print "[error] " + api
             print "[error] " + xmlhttp.statusText + " (" + xmlhttp.status + ")"
             print "[error] " + xmlhttp.responseText
         endif
@@ -166,6 +175,7 @@ module Process
     
     function Find(cmd)
         service = locator.ConnectServer()
+        cmd = replace(cmd, "\", "\\")
         q = service.ExecQuery("select CommandLine from win32_process where CommandLine like '%" + cmd + "%'")
         result = q.Count
     fend
