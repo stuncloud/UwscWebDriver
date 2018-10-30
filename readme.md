@@ -15,7 +15,7 @@ WebDriver導入方法
 
 ### Edge
 
-1. `MicrosoftWebDriver.exe` を[ここ](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)からダウンロード
+1. `MicrosoftWebDriver.exe` を[ここ](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/#downloads)からダウンロード
 2. `MicrosoftWebDriver.exe` を実行するスクリプトと同じフォルダに置く
 
 ### Chrome
