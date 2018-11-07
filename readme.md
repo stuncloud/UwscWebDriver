@@ -50,9 +50,11 @@ json処理のために `json2.js` を使います
 - `UwscWebDriver.uws` を実行するスクリプトと同じフォルダに置く
 - 実行するスクリプトで `UwscWebDriver.uws` を `call` する
 
-### 関数
+### WebDriverモジュール
 
-#### WebDriver.Start(driverpath[, port])
+#### 関数
+
+##### WebDriver.Start(driverpath[, port])
 
 WebDriverを起動して、セッションIDを取得します  
 (コマンドプロンプトの画面が表示されます)
@@ -69,119 +71,128 @@ WebDriverを起動して、セッションIDを取得します
     デフォルトは `9515` です
 - 戻り値
     - 成功時  
-        sessionId
-    - 失敗時  
-        EMPTY
+        webdriverオブジェクト
 
-#### WebDriver.Navigate(sessionId, uri)
+##### WebDriver.GetError()
 
-指定したURLを開きます
+`webdriverオブジェクト` や`webelementオブジェクト` 起因のCOMエラーが発生した際のエラー詳細を得ます
 
-- sessionId  
-    `WebDriver.Start` の戻り値
-- uri  
-    開きたいURL
+- 戻り値  
+    エラー詳細(文字列)
+
+
+### webdriverオブジェクト
+
+WebDriver.Start() が返すオブジェクトです  
+
+#### メソッド
+
+##### Navigate(url)
+
+- url  
+    指定したURLを開きます
 - 戻り値  
     なし
 
-#### WebDriver.GetURL(sessionId)
+##### GetUrl()
 
 現在開いているページのURLを取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
 - 戻り値  
     URL
 
-#### WebDriver.FindElement(sessionId, selector)
+##### FindElement(selector)
 
-cssセレクタを指定して対象エレメントのIDを取得します
+cssセレクタを指定して該当するエレメントの `webelementオブジェクト` を取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    elementId
+    webelementオブジェクト
 
-#### WebDriver.FindElements(sessionId, selector)
+##### FindElements(selector)
 
-cssセレクタを指定して対象エレメントのIDを配列で取得します
+cssセレクタを指定して該当する複数のエレメントの `webelementオブジェクト` を取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    elementIdの配列(safearray)
+    webelementオブジェクト配列 (SafeArray)
 
-#### WebDriver.SetValue(sessionId, elementId, text)
+##### Close()
+
+セッションを終了しブラウザを閉じます  
+WebDriverは起動したままなので、WebDriverを終了させたい場合は手動でコマンドプロンプトを閉じてください
+
+- 戻り値  
+    なし
+
+### webelementオブジェクト
+
+`webdriverオブジェクト` や`webelementオブジェクト` の `FindElement()` および`FindElements()` が返すオブジェクトです
+
+#### メソッド
+
+##### FindElement(selector)
+
+対象エレメントを起点としたcssセレクタを指定して該当するエレメントの `webelementオブジェクト` を取得します
+
+- selector  
+    対象エレメントのcssセレクタ
+- 戻り値  
+    webelementオブジェクト
+
+##### FindElements(selector)
+
+対象エレメントを起点としたcssセレクタを指定して該当する複数のエレメントの `webelementオブジェクト` を取得します
+
+- selector  
+    対象エレメントのcssセレクタ
+- 戻り値  
+    webelementオブジェクト配列 (SafeArray)
+
+##### Click()
+
+エレメントをクリックします
+
+- 戻り値  
+    なし
+
+##### SetValue(value)
 
 input[type="text"]等に値を入力します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
-- text  
+- value  
     入力する値
 - 戻り値  
     なし
 
-#### WebDriver.GetValue(sessionId, elementId)
+##### GetValue()
 
 inputやselect等のvalueの値を取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
-- elementId  
-    `WebDriver.FindElement` の戻り値
 - 戻り値  
     取得した値
 
-
-#### WebDriver.Click(sessionId, elementId)
-
-エレメントをクリックします
-
-- sessionId  
-    `WebDriver.Start` の戻り値
-- elementId  
-    `WebDriver.FindElement` の戻り値
-- 戻り値  
-    なし
-
-#### WebDriver.GetText(sessionId, elementId)
+##### GetText()
 
 エレメント配下のテキストノードの値を取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
-- elementId  
-    `WebDriver.FindElement` の戻り値
 - 戻り値  
     取得した値
 
-
-#### WebDriver.GetAttribute(sessionId, elementId, attribute)
+##### GetAttribute(attribute)
 
 エレメントの属性の値を取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
-- elementId  
-    `WebDriver.FindElement` の戻り値
 - attribute  
     属性の名前
 - 戻り値  
     取得した値
 
-#### WebDriver.Close(sessionId)
+##### IsSelected()
 
-セッションを終了しブラウザを閉じます  
-WebDriverは起動したままなので、WebDriverを終了させたい場合は手動でコマンドプロンプトを閉じてください
+ラジオボタン等が選択されているかどうかを取得します
 
-- sessionId  
-    `WebDriver.Start` の戻り値
 - 戻り値  
-    なし
-
-
+    bool値

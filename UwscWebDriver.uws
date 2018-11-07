@@ -6,6 +6,40 @@ module WebDriver
     const Edge    = "MicrosoftWebDriver.exe"
     const Firefox = "geckodriver.exe"
 
+    dim ScriptControl,CodeObject
+    procedure WebDriver
+        if fopen("json2.js", F_EXISTS) then
+            fid = fopen("json2.js", F_READ)
+            json2 = fget(fid, F_ALLTEXT)
+            fclose(fid)
+        else
+            msgbox("json2.jsがありません")
+            exitexit
+        endif
+        ScriptControl = createoleobj("ScriptControl")
+        try
+            with ScriptControl
+                .Language = "JScript"
+                .ExecuteStatement(json2)
+                .ExecuteStatement(jsStatement)
+                CodeObject = .CodeObject
+            endwith
+        except
+            e = ScriptControl.Error
+            if e.number then
+                msg = ""
+                msg = msg + TRY_ERRLINE + "<#CR>"
+                msg = msg + TRY_ERRMSG + "<#CR>"
+                msg = msg + e.Source + " (" + e.Number + ")" + "<#CR>"
+                msg = msg + e.Description + "<#CR>"
+                msg = msg + "[Line: " + e.Line + "] " + e.Text + "<#CR>"
+                msgbox(msg)
+            endif
+            exitexit
+        endtry
+        json2 = EMPTY
+    fend
+    
     function Start(driverpath, port = 9515)
         if ! fopen(driverpath, F_EXISTS) then
             result = EMPTY
@@ -23,145 +57,162 @@ module WebDriver
                 exit
             endif
         endif
-        dim r
-        body = "{<#DBL>desiredCapabilities<#DBL>: {}, <#DBL>requiredCapabilities<#DBL>: {}}"
-        if _post(r, "/session", body) then
-            result = r.sessionId
-        endif
+        result = CodeObject.WebDriver.Start(port)
     fend
+
+    textblock jsStatement
+/* WebDriverオブジェクト */
+var WebDriver = function(sessionId, port) {
+    this.sessionId = sessionId;
+    this.port = port;
+};
+
+WebDriver.Start = function(port) {
+    var api = '/session';
+    var body = {
+        "desiredCapabilities": {},
+        "requiredCapabilities": {}
+    };
+    r = WebDriver._request('POST', api, body, port);
+    return new WebDriver(r.sessionId, port);
+};
+
+WebDriver._request = function(method, api, body, port) {
+    var uri = "http://localhost:" + port + api;
+    var xhr = new ActiveXObject("Msxml2.XMLHTTP");
+    xhr.open(method, uri, false);
+    xhr.setRequestHeader("Content-Type", "text/plain; charset=UTF-8");
+    strbody = JSON.stringify(body);
+    xhr.send(strbody);
+    if (xhr.status === 200) {
+        return JSON.parse(xhr.responseText);
+    }
+    return null;
+};
+
+WebDriver.prototype.request = function(method, api, body) {
+    return WebDriver._request(method, api, body, this.port);
+};
+
+WebDriver.prototype.Navigate = function(url) {
+    var api = '/session/' + this.sessionId + '/url'
+    var body = {"url": url};
+    return this.request('POST', api, body);
+};
+
+WebDriver.prototype.GetUrl = function() {
+    var api = '/session/' + this.sessionId + '/url'
+    r = this.request('GET', api);
+    return r.value;
+};
+
+WebDriver.prototype.FindElement = function(selector) {
+    var api = '/session/' + this.sessionId + '/element'
+    var body = {
+        "using": "css",
+        "value": selector
+    };
+    r = this.request('POST', api, body);
+    return new Element(this, r.value.ELEMENT);
+};
+
+WebDriver.prototype.FindElements = function(selector) {
+    var api = '/session/' + this.sessionId + '/elements'
+    var body = {
+        "using": "css",
+        "value": selector
+    };
+    r = this.request('POST', api, body);
+    var dictionary = new ActiveXObject("Scripting.Dictionary");
+    for (var i = 0; i < r.value.length; i++) {
+        dictionary.add(i, new Element(this, r.value[i].ELEMENT));
+    }
+    return dictionary.Items();
+};
+
+WebDriver.prototype.Close = function() {
+    var api = '/session/' + this.sessionId
+    return this.request('DELETE', api);
+};
+
+/* Elementオブジェクト */
+var Element = function(driver, elementId) {
+    this.driver = driver;
+    this.elementId = elementId;
+};
+
+Element.prototype.Click = function() {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/click';
+    return this.driver.request('POST', api);
+};
+
+Element.prototype.SetValue = function(value) {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/value';
+    var body = {"value": [value]};
+    return this.driver.request('POST', api, body);
+};
+
+Element.prototype.GetValue = function() {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/value';
+    r = this.driver.request('GET', api);
+    return r.value;
+};
+
+Element.prototype.GetText = function() {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/text';
+    r = this.driver.request('GET', api);
+    return r.value;
+};
+
+Element.prototype.GetAttribute = function(attribute) {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/attribute/' + attribute;
+    r = this.driver.request('GET', api);
+    return r.value;
+};
+
+Element.prototype.IsSelected = function() {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/selected';
+    r = this.driver.request('GET', api);
+    return r.value;
+};
+
+Element.prototype.FindElement = function(selector) {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/element';
+    var body = {
+        "using": "css",
+        "value": selector
+    };
+    r = this.driver.request('POST', api, body);
+    return new Element(this.driver, r.value.ELEMENT);
+};
+
+Element.prototype.FindElements = function(selector) {
+    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/elements';
+    var body = {
+        "using": "css",
+        "value": selector
+    };
+    r = this.driver.request('POST', api, body);
+    var dictionary = new ActiveXObject("Scripting.Dictionary");
+    for (var i = 0; i < r.value.length; i++) {
+        dictionary.add(i, new Element(this.driver, r.value[i].ELEMENT));
+    }
+    return dictionary.Items();
+};
+    endtextblock
     
-    function Navigate(sessionId, uri)
-        dim r
-        api  = "/session/" + sessionId + "/url"
-        body = "{<#DBL>url<#DBL>: <#DBL>" + uri + "<#DBL>}"
-        if _post(r, api, body) then
-            result = EMPTY
-        endif
-    fend
-
-    function GetURL(sessionId)
-        dim r
-        api  = "/session/" + sessionId + "/url"
-        body = EMPTY
-        if _get(r, api, body) then
-            result = r.value
-        endif
-    fend
-    
-    function FindElement(sessionId, selector)
-        dim r
-        api  = "/session/" + sessionId + "/element"
-        selector = replace(selector, "<#DBL>", "\<#DBL>")
-        body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
-        if _post(r, api, body) then
-            result = r.value.ELEMENT
-        endif
-    fend
-
-    function FindElements(sessionId, selector)
-        dim r
-        api  = "/session/" + sessionId + "/elements"
-        selector = replace(selector, "<#DBL>", "\<#DBL>")
-        body = "{<#DBL>using<#DBL>: <#DBL>css<#DBL>, <#DBL>value<#DBL>: <#DBL>" + selector + "<#DBL>}"
-        if _post(r, api, body) then
-            result = safearray(0, r.value.length - 1)
-            for i = 0 to length(result) - 1
-                result[i] = r.value.item(i).ELEMENT
-            next
-        endif
-    fend
-    
-    function SetValue(sessionId, elementId, text)
-        dim r
-        api  = "/session/" + sessionId + "/element/" + elementId + "/value"
-        body = "{<#DBL>value<#DBL>: [<#DBL>" + text + "<#DBL>]}"
-        if _post(r, api, body) then
-            result = EMPTY
-        endif
-    fend
-
-    function GetValue(sessionId, elementId)
-        dim r
-        api  = "/session/" + sessionId + "/element/" + elementId + "/value"
-        if _get(r, api) then
-            result = EMPTY
-        endif
-    fend
-    
-    function Click(sessionId, elementId)
-        dim r
-        api  = "/session/" + sessionId + "/element/" + elementId + "/click"
-        body = EMPTY
-        if _post(r, api, body) then
-            result = EMPTY
-        endif
-    fend
-
-    function GetText(sessionId, elementId)
-        dim r
-        api = "/session/" + sessionId + "/element/" + elementId + "/text"
-        if _get(r, api) then
-            result = r.value
-        endif
-    fend
-
-    function GetAttribute(sessionId, elementId, attribute)
-        dim r
-        api = "/session/" + sessionId + "/element/" + elementId + "/attribute/" + attribute
-        if _get(r, api) then
-            result = r.value
-        endif
-    fend
-
-    function Close(sessionId)
-        dim r
-        api  = "/session/" + sessionId
-        body = EMPTY
-        if _delete(r, api, body) then
-            result = EMPTY
-        endif
-    fend
-
-    function _get(var response, api, body = EMPTY)
-        result = _request(response, "GET", api, body)
-    fend
-    
-    function _post(var response, api, body = EMPTY)
-        result = _request(response, "POST", api, body)
-    fend
-    
-    function _delete(var response, api, body = EMPTY)
-        result = _request(response, "DELETE", api, body)
-    fend
-
-    function _request(var response, method, api, body = EMPTY)
-        hashtbl header
-        header["Content-Type"] = "text/plain; charset=UTF-8"
-        uri = "http://localhost:" + this.port + api
-        if debug then print "[debug] request url : " + uri
-        if debug then print "[debug] request body: " + body
-
-        xmlhttp = createoleobj("Msxml2.XMLHTTP")
-        xmlhttp.open(method, uri, FALSE)
-        for key in Header
-            xmlhttp.setRequestHeader(key, Header[key])
-        next
-        xmlhttp.send(body)
-
-        result = xmlhttp.status = 200
-        if result then
-            response = JSON.Parse(xmlhttp.responseText)
-        else
-            print "[error] " + api
-            print "[error] " + xmlhttp.statusText + " (" + xmlhttp.status + ")"
-            print "[error] " + xmlhttp.responseText
-        endif
-        if debug then print "[debug] response    : " + xmlhttp.responseText
-
-    fend
-
-    procedure Debug()
-        debug = TRUE 
+    function GetError()
+        result = ""
+        with ScriptControl.Error
+            result = result + "Number      :" + .Number + "<#CR>"
+            result = result + "Source      :" + .Source + "<#CR>"
+            result = result + "Description :" + .Description + "<#CR>"
+            result = result + "HelpFile    :" + .HelpFile + "<#CR>"
+            result = result + "HelpContext :" + .HelpContext + "<#CR>"
+            result = result + "Text        :" + .Text + "<#CR>"
+            result = result + "Line        :" + .Line + "<#CR>"
+            result = result + "Column      :" + .Column
+        endwith
     fend
 
 endmodule
