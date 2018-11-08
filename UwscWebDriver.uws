@@ -40,7 +40,7 @@ module WebDriver
         json2 = EMPTY
     fend
     
-    function Start(driverpath, port = 9515)
+    function Start(driverpath, port = 9515, debug = FALSE)
         if ! fopen(driverpath, F_EXISTS) then
             result = EMPTY
             msgbox("WebDriverが見つかりません: " + driverpath)
@@ -57,33 +57,57 @@ module WebDriver
                 exit
             endif
         endif
-        result = CodeObject.WebDriver.Start(port)
+        result = CodeObject.WebDriver.Start(port, debug)
     fend
+
+    function GetLog()
+        result = CodeObject.WebDriver.GetLog()
+    fend
+    
 
     textblock jsStatement
 /* WebDriverオブジェクト */
-var WebDriver = function(sessionId, port) {
+var WebDriver = function(sessionId, port, debug) {
     this.sessionId = sessionId;
     this.port = port;
+    this.debug = debug;
 };
 
-WebDriver.Start = function(port) {
+WebDriver.Start = function(port, debug) {
     var api = '/session';
     var body = {
         "desiredCapabilities": {},
         "requiredCapabilities": {}
     };
-    r = WebDriver._request('POST', api, body, port);
-    return new WebDriver(r.sessionId, port);
+    r = WebDriver._request('POST', api, body, port, debug);
+    return new WebDriver(r.sessionId, port, debug);
 };
 
-WebDriver._request = function(method, api, body, port) {
+WebDriver.Log = [];
+WebDriver.GetLog = function() {
+    var d = new ActiveXObject("Scripting.Dictionary");
+    for (var i = 0; i < WebDriver.Log.length; i++) {
+        d.add(i, WebDriver.Log[i]);
+    }
+    return d.Items();
+}
+
+WebDriver._request = function(method, api, body, port, debug) {
     var uri = "http://localhost:" + port + api;
     var xhr = new ActiveXObject("Msxml2.XMLHTTP");
     xhr.open(method, uri, false);
     xhr.setRequestHeader("Content-Type", "text/plain; charset=UTF-8");
     strbody = JSON.stringify(body);
     xhr.send(strbody);
+    if (debug) {
+        WebDriver.Log.push({
+            "api": api,
+            "body": strbody,
+            "status": xhr.status,
+            "statusText": xhr.statusText,
+            "response": xhr.responseText
+        });
+    }
     if (xhr.status === 200) {
         return JSON.parse(xhr.responseText);
     }
@@ -91,7 +115,7 @@ WebDriver._request = function(method, api, body, port) {
 };
 
 WebDriver.prototype.request = function(method, api, body) {
-    return WebDriver._request(method, api, body, this.port);
+    return WebDriver._request(method, api, body, this.port, this.debug);
 };
 
 WebDriver.prototype.Navigate = function(url) {
