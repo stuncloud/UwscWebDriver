@@ -39,15 +39,34 @@ module WebDriver
         endtry
         json2 = EMPTY
     fend
+
+    procedure Debug(b = TRUE)
+        debug = b
+    fend
     
-    function Start(driverpath, port = 9515, debug = FALSE)
+    
+    function Start(driverpath, port = 0)
         if ! fopen(driverpath, F_EXISTS) then
             result = EMPTY
             msgbox("WebDriverが見つかりません: " + driverpath)
             exit
         endif
+
+        if port = 0 then
+            select TRUE
+                case pos(Chrome, driverpath) > 0
+                    port = 9515
+                case pos(Edge, driverpath) > 0
+                    port = 17556
+                case pos(Firefox, driverpath) > 0
+                    port = 7055
+                default
+                    msgbox("ポート番号を指定してください")
+                    exitexit
+            selend
+        endif
         
-        cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port
+        cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + " --verbose"
         this.port = port
         if ! Process.Find(cmd) then
             doscmd(cmd, TRUE, TRUE)
@@ -57,6 +76,7 @@ module WebDriver
                 exit
             endif
         endif
+        sleep(2)
         result = CodeObject.WebDriver.Start(port, debug)
     fend
 
@@ -76,11 +96,13 @@ var WebDriver = function(sessionId, port, debug) {
 WebDriver.Start = function(port, debug) {
     var api = '/session';
     var body = {
-        "desiredCapabilities": {},
-        "requiredCapabilities": {}
+        desiredCapabilities: {},
+        requiredCapabilities: {}
     };
     r = WebDriver._request('POST', api, body, port, debug);
-    return new WebDriver(r.sessionId, port, debug);
+    if (r)
+        return new WebDriver(r.sessionId, port, debug);
+    return null;
 };
 
 WebDriver.Log = [];
@@ -96,8 +118,8 @@ WebDriver._request = function(method, api, body, port, debug) {
     var uri = "http://localhost:" + port + api;
     var xhr = new ActiveXObject("Msxml2.XMLHTTP");
     xhr.open(method, uri, false);
-    xhr.setRequestHeader("Content-Type", "text/plain; charset=UTF-8");
-    strbody = JSON.stringify(body);
+    xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+    strbody = body ? JSON.stringify(body): null;
     xhr.send(strbody);
     if (debug) {
         WebDriver.Log.push({
@@ -228,14 +250,16 @@ Element.prototype.FindElements = function(selector) {
     function GetError()
         result = ""
         with ScriptControl.Error
-            result = result + "Number      :" + .Number + "<#CR>"
-            result = result + "Source      :" + .Source + "<#CR>"
-            result = result + "Description :" + .Description + "<#CR>"
-            result = result + "HelpFile    :" + .HelpFile + "<#CR>"
-            result = result + "HelpContext :" + .HelpContext + "<#CR>"
-            result = result + "Text        :" + .Text + "<#CR>"
-            result = result + "Line        :" + .Line + "<#CR>"
-            result = result + "Column      :" + .Column
+            if .Number then
+                result = result + "Number      :" + .Number + "<#CR>"
+                result = result + "Source      :" + .Source + "<#CR>"
+                result = result + "Description :" + .Description //+ "<#CR>"
+                // result = result + "HelpFile    :" + .HelpFile + "<#CR>"
+                // result = result + "HelpContext :" + .HelpContext + "<#CR>"
+                result = result + "Text        :" + .Text + "<#CR>"
+                result = result + "Line        :" + .Line + "<#CR>"
+                result = result + "Column      :" + .Column
+            endif
         endwith
     fend
 
