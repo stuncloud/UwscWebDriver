@@ -15,8 +15,11 @@ WebDriver導入方法
 
 ### Edge
 
-1. `MicrosoftWebDriver.exe` を[ここ](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/#downloads)からダウンロード
-2. `MicrosoftWebDriver.exe` を実行するスクリプトと同じフォルダに置く
+1. 管理者として実行したコマンドプロンプト、またはPowerShellから以下を実行する
+
+    ```
+    DISM.exe /Online /Add-Capability /CapabilityName:Microsoft.WebDriver~~~~0.0.1.0
+    ```
 
 ### Chrome
 
@@ -72,6 +75,8 @@ WebDriverを起動して、セッションIDを取得します
 - 戻り値
     - 成功時  
         webdriverオブジェクト
+    - 失敗時  
+        null
 
 ##### WebDriver.GetError()
 
@@ -108,7 +113,10 @@ cssセレクタを指定して該当するエレメントの `webelementオブ�
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    webelementオブジェクト
+    - 成功時  
+        webelementオブジェクト
+    - 失敗時  
+        null
 
 ##### FindElements(selector)
 
@@ -117,7 +125,11 @@ cssセレクタを指定して該当する複数のエレメントの `webelemen
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    webelementオブジェクト配列 (SafeArray)
+    - 成功時  
+        webelementオブジェクト配列 (SafeArray)
+    - 失敗時  
+        null
+    
 
 ##### Close()
 
@@ -140,7 +152,10 @@ WebDriverは起動したままなので、WebDriverを終了させたい場合�
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    webelementオブジェクト
+    - 成功時  
+        webelementオブジェクト
+    - 失敗時  
+        null
 
 ##### FindElements(selector)
 
@@ -149,7 +164,10 @@ WebDriverは起動したままなので、WebDriverを終了させたい場合�
 - selector  
     対象エレメントのcssセレクタ
 - 戻り値  
-    webelementオブジェクト配列 (SafeArray)
+    - 成功時  
+        webelementオブジェクト配列 (SafeArray)
+    - 失敗時  
+        null
 
 ##### Click()
 

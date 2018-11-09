@@ -3,11 +3,15 @@ module WebDriver
     dim debug = FALSE
     dim port
     const Chrome  = "chromedriver.exe"
-    const Edge    = "MicrosoftWebDriver.exe"
+    const Edge    = ""
     const Firefox = "geckodriver.exe"
 
     dim ScriptControl,CodeObject
     procedure WebDriver
+        with createoleobj("WScript.Shell")
+            Edge = .ExpandEnvironmentStrings("%SystemRoot%\system32\MicrosoftWebDriver.exe")
+        endwith
+
         if fopen("json2.js", F_EXISTS) then
             fid = fopen("json2.js", F_READ)
             json2 = fget(fid, F_ALLTEXT)
@@ -16,6 +20,7 @@ module WebDriver
             msgbox("json2.jsがありません")
             exitexit
         endif
+
         ScriptControl = createoleobj("ScriptControl")
         try
             with ScriptControl
@@ -45,44 +50,63 @@ module WebDriver
     fend
     
     
-    function Start(driverpath, port = 0)
+    function Start(driverpath, port = 0, capabilities = EMPTY)
         if ! fopen(driverpath, F_EXISTS) then
-            result = EMPTY
+            result = null
             msgbox("WebDriverが見つかりません: " + driverpath)
             exit
         endif
 
-        if port = 0 then
-            select TRUE
-                case pos(Chrome, driverpath) > 0
-                    port = 9515
-                case pos(Edge, driverpath) > 0
-                    port = 17556
-                case pos(Firefox, driverpath) > 0
-                    port = 7055
-                default
+        select TRUE
+            case pos(Chrome, driverpath) > 0
+                capabilities = ChromeCapabilities
+                if port = 0 then port = 9515
+            case pos(Edge, driverpath) > 0
+                if port = 0 then port = 17556
+                capabilities = EdgeCapabilities
+            case pos(Firefox, driverpath) > 0
+                if port = 0 then port = 7055
+                capabilities = ChromeCapabilities
+            default
+                if port = 0 then 
                     msgbox("ポート番号を指定してください")
+                    exitexit 
+                elseif capabilities = EMPTY then
+                    msgbox("Capabilityを指定してください")
                     exitexit
-            selend
-        endif
+                endif
+        selend
         
         cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + " --verbose"
         this.port = port
         if ! Process.Find(cmd) then
             doscmd(cmd, TRUE, TRUE)
             if ! Process.Wait(port) then
-                result = EMPTY
+                result = null
                 msgbox("WebDriverが起動していません")
                 exit
             endif
         endif
         sleep(2)
-        result = CodeObject.WebDriver.Start(port, debug)
+        result = CodeObject.WebDriver.Start(port, capabilities, debug)
     fend
 
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
     fend
+    
+    textblock EdgeCapabilities
+        {
+            "capabilities": {}
+        }
+    endtextblock
+    
+    textblock ChromeCapabilities
+        {
+            "desiredCapabilities": {},
+            "requiredCapabilities": {}
+        }
+    endtextblock
     
 
     textblock jsStatement
@@ -93,15 +117,16 @@ var WebDriver = function(sessionId, port, debug) {
     this.debug = debug;
 };
 
-WebDriver.Start = function(port, debug) {
+WebDriver.Start = function(port, capabilities, debug) {
+    if (capabilities)
+        capabilities = JSON.parse(capabilities);
     var api = '/session';
-    var body = {
-        desiredCapabilities: {},
-        requiredCapabilities: {}
-    };
+    var body = capabilities;
     r = WebDriver._request('POST', api, body, port, debug);
-    if (r)
-        return new WebDriver(r.sessionId, port, debug);
+    if (r) {
+        var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
+        return new WebDriver(sessionId, port, debug);
+    }
     return null;
 };
 
@@ -159,6 +184,8 @@ WebDriver.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.request('POST', api, body);
+    if (! r && r.status != 0)
+        return null;
     return new Element(this, r.value.ELEMENT);
 };
 
@@ -169,6 +196,8 @@ WebDriver.prototype.FindElements = function(selector) {
         "value": selector
     };
     r = this.request('POST', api, body);
+    if (! r && r.status != 0)
+        return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
         dictionary.add(i, new Element(this, r.value[i].ELEMENT));
@@ -229,6 +258,8 @@ Element.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.driver.request('POST', api, body);
+    if (! r && r.status != 0)
+        return null;
     return new Element(this.driver, r.value.ELEMENT);
 };
 
@@ -239,6 +270,8 @@ Element.prototype.FindElements = function(selector) {
         "value": selector
     };
     r = this.driver.request('POST', api, body);
+    if (! r && r.status != 0)
+        return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
         dictionary.add(i, new Element(this.driver, r.value[i].ELEMENT));
