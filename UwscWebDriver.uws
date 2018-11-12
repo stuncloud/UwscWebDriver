@@ -3,14 +3,12 @@ module WebDriver
     dim debug = FALSE
     dim port
     const Chrome  = "chromedriver.exe"
-    const Edge    = ""
     const Firefox = "geckodriver.exe"
+    const Edge    = "%SystemRoot%\system32\MicrosoftWebDriver.exe"
+    dim   EdgeExpandedPath = EMPTY
 
     dim ScriptControl,CodeObject
     procedure WebDriver
-        with createoleobj("WScript.Shell")
-            Edge = .ExpandEnvironmentStrings("%SystemRoot%\system32\MicrosoftWebDriver.exe")
-        endwith
 
         if fopen("json2.js", F_EXISTS) then
             fid = fopen("json2.js", F_READ)
@@ -51,6 +49,13 @@ module WebDriver
     
     
     function Start(driverpath, port = 0, capabilities = EMPTY)
+        if driverpath = Edge then
+            with createoleobj("WScript.Shell")
+                EdgeExpandedPath = .ExpandEnvironmentStrings(driverpath)
+            endwith
+            driverpath = EdgeExpandedPath
+        endif
+
         if ! fopen(driverpath, F_EXISTS) then
             result = null
             msgbox("WebDriverが見つかりません: " + driverpath)
@@ -61,7 +66,7 @@ module WebDriver
             case pos(Chrome, driverpath) > 0
                 capabilities = ChromeCapabilities
                 if port = 0 then port = 9515
-            case pos(Edge, driverpath) > 0
+            case pos(EdgeExpandedPath, driverpath) > 0
                 if port = 0 then port = 17556
                 capabilities = EdgeCapabilities
             case pos(Firefox, driverpath) > 0
@@ -180,7 +185,7 @@ WebDriver.prototype.GetUrl = function() {
 WebDriver.prototype.FindElement = function(selector) {
     var api = '/session/' + this.sessionId + '/element'
     var body = {
-        "using": "css",
+        "using": "css selector",
         "value": selector
     };
     r = this.request('POST', api, body);
