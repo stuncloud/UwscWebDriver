@@ -120,6 +120,7 @@ var WebDriver = function(sessionId, port, debug) {
     this.sessionId = sessionId;
     this.port = port;
     this.debug = debug;
+    this.apibase = '/session/' + this.sessionId;
 };
 
 WebDriver.Start = function(port, capabilities, debug) {
@@ -171,19 +172,19 @@ WebDriver.prototype.request = function(method, api, body) {
 };
 
 WebDriver.prototype.Navigate = function(url) {
-    var api = '/session/' + this.sessionId + '/url'
+    var api = this.apibase + '/url'
     var body = {"url": url};
     return this.request('POST', api, body);
 };
 
 WebDriver.prototype.GetUrl = function() {
-    var api = '/session/' + this.sessionId + '/url'
+    var api = this.apibase + '/url'
     r = this.request('GET', api);
     return r.value;
 };
 
 WebDriver.prototype.FindElement = function(selector) {
-    var api = '/session/' + this.sessionId + '/element'
+    var api = this.apibase + '/element'
     var body = {
         "using": "css selector",
         "value": selector
@@ -195,9 +196,9 @@ WebDriver.prototype.FindElement = function(selector) {
 };
 
 WebDriver.prototype.FindElements = function(selector) {
-    var api = '/session/' + this.sessionId + '/elements'
+    var api = this.apibase + '/elements'
     var body = {
-        "using": "css",
+        "using": "css selector",
         "value": selector
     };
     r = this.request('POST', api, body);
@@ -210,56 +211,88 @@ WebDriver.prototype.FindElements = function(selector) {
     return dictionary.Items();
 };
 
+WebDriver.prototype.FindElementsByName = function(name) {
+    return this.FindElements('*[name="' + name + '"]');
+};
+
 WebDriver.prototype.Close = function() {
-    var api = '/session/' + this.sessionId
+    var api = this.apibase
     return this.request('DELETE', api);
 };
+
+WebDriver.prototype.SaveScreenshot = function(path) {
+    var api = this.apibase + '/screenshot'
+    r = this.request('GET', api);
+    WebDriver._saveScreenshot(r.value, path);
+};
+
+WebDriver._saveScreenshot = function(base64, path) {
+    var xmldom = new ActiveXObject('Microsoft.XMLDOM');
+    var elem = xmldom.createElement("base64");
+    elem.dataType = "bin.base64";
+    elem.text = base64;
+    bin = elem.nodeTypedValue;
+
+    var stream = new ActiveXObject('ADODB.Stream');
+    stream.Open()
+    stream.Type = 1 // adTypeBinary
+    stream.Write(bin)
+    stream.SaveToFile(path, 2) // adSaveCreateOverWrite
+    stream.Close()
+}
 
 /* Elementオブジェクト */
 var Element = function(driver, elementId) {
     this.driver = driver;
     this.elementId = elementId;
+    this.apibase = '/session/' + this.driver.sessionId + '/element/' + this.elementId;
 };
 
 Element.prototype.Click = function() {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/click';
+    var api = this.apibase + '/click';
+    return this.driver.request('POST', api);
+};
+
+Element.prototype.Clear = function() {
+    var api = this.apibase + '/clear';
     return this.driver.request('POST', api);
 };
 
 Element.prototype.SetValue = function(value) {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/value';
-    var body = {"value": [value]};
+    var api = this.apibase + '/value';
+    var body = {
+        text: value,
+        value: value.split('')
+    };
     return this.driver.request('POST', api, body);
 };
 
 Element.prototype.GetValue = function() {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/value';
-    r = this.driver.request('GET', api);
-    return r.value;
+    return this.GetAttribute('value');
 };
 
 Element.prototype.GetText = function() {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/text';
+    var api = this.apibase + '/text';
     r = this.driver.request('GET', api);
     return r.value;
 };
 
 Element.prototype.GetAttribute = function(attribute) {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/attribute/' + attribute;
+    var api = this.apibase + '/attribute/' + attribute;
     r = this.driver.request('GET', api);
     return r.value;
 };
 
 Element.prototype.IsSelected = function() {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/selected';
+    var api = this.apibase + '/selected';
     r = this.driver.request('GET', api);
     return r.value;
 };
 
 Element.prototype.FindElement = function(selector) {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/element';
+    var api = this.apibase + '/element';
     var body = {
-        "using": "css",
+        "using": "css selector",
         "value": selector
     };
     r = this.driver.request('POST', api, body);
@@ -269,9 +302,9 @@ Element.prototype.FindElement = function(selector) {
 };
 
 Element.prototype.FindElements = function(selector) {
-    var api = '/session/' + this.driver.sessionId + '/element/' + this.elementId + '/elements';
+    var api = this.apibase + '/elements';
     var body = {
-        "using": "css",
+        "using": "css selector",
         "value": selector
     };
     r = this.driver.request('POST', api, body);
@@ -283,6 +316,13 @@ Element.prototype.FindElements = function(selector) {
     }
     return dictionary.Items();
 };
+
+Element.prototype.SaveScreenshot = function(path) {
+    var api = this.apibase + '/screenshot'
+    r = this.driver.request('GET', api);
+    WebDriver._saveScreenshot(r.value, path);
+};
+
     endtextblock
     
     function GetError()
