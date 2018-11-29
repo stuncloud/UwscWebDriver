@@ -1,0 +1,75 @@
+call UwscWebDriver.uws
+
+driver = WebDriver.Start(WebDriver.Edge)
+driver.Navigate("http://example.selenium.jp/reserveApp/")
+
+// 予約フォーム画面
+
+// 宿泊日
+gettime(1)
+with driver.FindElement("#reserve_year")
+    .Clear()
+    .SetValue(G_TIME_YY4)
+endwith
+with driver.FindElement("#reserve_month")
+    .Clear()
+    .SetValue(""+G_TIME_MM)
+endwith
+with driver.FindElement("#reserve_day")
+    .Clear()
+    .SetValue(""+G_TIME_DD)
+endwith
+with driver.FindElement("#reserve_term")
+    .Clear()
+    .SetValue("6")
+endwith
+
+// 人数
+with driver.FindElement("#headcount")
+    .Clear()
+    .SetValue("3")
+endwith
+
+// 朝食バイキング
+with driver.FindElement("#breakfast_off")
+    if ! .IsSelected() then
+        .Click()
+    endif
+endwith
+
+// プラン
+with driver.FindElement("#plan_b")
+    if ! .IsSelected() then
+        .Click()
+    endif
+endwith
+
+// お名前
+with driver.FindElement("#guestname")
+    .Clear()
+    .SetValue("やまだたろう")
+endwith
+// スクショ保存
+driver.SaveScreenshot("form1.png")
+
+// 次へ
+driver.FindElement("#goto_next").Click()
+
+// 予約内容画面
+dim price
+elem = driver.FindElement("#price")
+if elem <> null then
+    price = elem.GetText()
+endif
+// スクショ保存
+driver.SaveScreenshot("form2.png")
+
+// 確定
+driver.FindElement("#commit").Click()
+
+if length(price) then
+    msgbox("合計で" + price + "円でした<#CR>OKで終了")
+else
+    msgbox("なんかうまく行ってないです")
+endif
+driver.Close()
