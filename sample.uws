@@ -1,6 +1,10 @@
 call UwscWebDriver.uws
 
-driver = WebDriver.Start(WebDriver.Edge)
+dim jsc
+if ! WebDriver.Init(jsc) then
+    exit
+endif
+driver = WebDriver.Start(jsc, WebDriver.Edge)
 driver.Navigate("http://example.selenium.jp/reserveApp/")
 
 // 予約フォーム画面

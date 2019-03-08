@@ -5,27 +5,35 @@ module WebDriver
     const Firefox = "geckodriver.exe"
     const Edge    = "MicrosoftWebDriver.exe"
 
-    dim ScriptControl,CodeObject
     procedure WebDriver
         if fopen("json2.js", F_EXISTS) then
-            fid = fopen("json2.js", F_READ)
-            json2 = fget(fid, F_ALLTEXT)
-            fclose(fid)
         else
             msgbox("json2.jsがありません")
             exitexit
         endif
 
-        ScriptControl = createoleobj("ScriptControl")
+        json2 = EMPTY
+    fend
+
+    procedure Debug(b = TRUE)
+        debug = b
+    fend
+    
+    function Init(var JSControl)
+        JSControl = createoleobj("ScriptControl")
+        fid = fopen("json2.js", F_READ)
+        json2 = fget(fid, F_ALLTEXT)
+        fclose(fid)
         try
-            with ScriptControl
+            with JSControl
                 .Language = "JScript"
                 .ExecuteStatement(json2)
                 .ExecuteStatement(jsStatement)
-                CodeObject = .CodeObject
             endwith
+            result = TRUE
         except
-            e = ScriptControl.Error
+            result = FALSE
+            e = JSControl.Error
             if e.number then
                 msg = ""
                 msg = msg + TRY_ERRLINE + "<#CR>"
@@ -35,17 +43,11 @@ module WebDriver
                 msg = msg + "[Line: " + e.Line + "] " + e.Text + "<#CR>"
                 msgbox(msg)
             endif
-            exitexit
         endtry
-        json2 = EMPTY
-    fend
-
-    procedure Debug(b = TRUE)
-        debug = b
     fend
     
     
-    function Start(driverpath, port = 0, capabilities = EMPTY)
+    function Start(JSControl, driverpath, port = 0, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
         if ! length(driverversion) then
@@ -84,11 +86,11 @@ module WebDriver
             endif
         endif
         sleep(2)
-        result = CodeObject.WebDriver.Start(port, capabilities, debug)
+        result = JSControl.CodeObject.WebDriver.Start(port, capabilities, debug)
     fend
 
-    function GetLog()
-        result = CodeObject.WebDriver.GetLog()
+    function GetLog(JSControl)
+        result = JSControl.CodeObject.WebDriver.GetLog()
     fend
     
     textblock EdgeCapabilities
@@ -316,18 +318,18 @@ Element.prototype.SaveScreenshot = function(path) {
 
     endtextblock
     
-    function GetError()
+    function GetError(JSControl)
         result = ""
-        with ScriptControl.Error
-            if .Number then
+        with JSControl.Error
                 result = result + "Number      :" + .Number + "<#CR>"
                 result = result + "Source      :" + .Source + "<#CR>"
-                result = result + "Description :" + .Description //+ "<#CR>"
+                result = result + "Description :" + .Description + "<#CR>"
                 // result = result + "HelpFile    :" + .HelpFile + "<#CR>"
                 // result = result + "HelpContext :" + .HelpContext + "<#CR>"
                 result = result + "Text        :" + .Text + "<#CR>"
                 result = result + "Line        :" + .Line + "<#CR>"
                 result = result + "Column      :" + .Column
+            if .Number then
             endif
         endwith
     fend
