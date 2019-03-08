@@ -1,15 +1,12 @@
 
 module WebDriver
     dim debug = FALSE
-    dim port
     const Chrome  = "chromedriver.exe"
     const Firefox = "geckodriver.exe"
-    const Edge    = "%SystemRoot%\system32\MicrosoftWebDriver.exe"
-    dim   EdgeExpandedPath = EMPTY
+    const Edge    = "MicrosoftWebDriver.exe"
 
     dim ScriptControl,CodeObject
     procedure WebDriver
-
         if fopen("json2.js", F_EXISTS) then
             fid = fopen("json2.js", F_READ)
             json2 = fget(fid, F_ALLTEXT)
@@ -49,14 +46,9 @@ module WebDriver
     
     
     function Start(driverpath, port = 0, capabilities = EMPTY)
-        if driverpath = Edge then
-            with createoleobj("WScript.Shell")
-                EdgeExpandedPath = .ExpandEnvironmentStrings(driverpath)
-            endwith
-            driverpath = EdgeExpandedPath
-        endif
+        driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
-        if ! fopen(driverpath, F_EXISTS) then
+        if ! length(driverversion) then
             result = null
             msgbox("WebDriverが見つかりません: " + driverpath)
             exit
@@ -66,7 +58,7 @@ module WebDriver
             case pos(Chrome, driverpath) > 0
                 capabilities = ChromeCapabilities
                 if port = 0 then port = 9515
-            case pos(EdgeExpandedPath, driverpath) > 0
+            case pos(Edge, driverpath) > 0
                 if port = 0 then port = 17556
                 capabilities = EdgeCapabilities
             case pos(Firefox, driverpath) > 0
@@ -83,7 +75,6 @@ module WebDriver
         selend
         
         cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + " --verbose"
-        this.port = port
         if ! Process.Find(cmd) then
             doscmd(cmd, TRUE, TRUE)
             if ! Process.Wait(port) then
