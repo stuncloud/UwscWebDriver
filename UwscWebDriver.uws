@@ -4,6 +4,7 @@ module WebDriver
     const Chrome  = "chromedriver.exe"
     const Firefox = "geckodriver.exe"
     const Edge    = "MicrosoftWebDriver.exe"
+    hashtbl JSControl
 
     procedure WebDriver
         if fopen("json2.js", F_EXISTS) then
@@ -19,21 +20,19 @@ module WebDriver
         debug = b
     fend
     
-    function Init(var JSControl)
-        JSControl = createoleobj("ScriptControl")
+    function NewScriptControl()
+        result = createoleobj("ScriptControl")
         fid = fopen("json2.js", F_READ)
         json2 = fget(fid, F_ALLTEXT)
         fclose(fid)
         try
-            with JSControl
+            with result
                 .Language = "JScript"
                 .ExecuteStatement(json2)
                 .ExecuteStatement(jsStatement)
             endwith
-            result = TRUE
         except
-            result = FALSE
-            e = JSControl.Error
+            e = result.Error
             if e.number then
                 msg = ""
                 msg = msg + TRY_ERRLINE + "<#CR>"
@@ -42,12 +41,13 @@ module WebDriver
                 msg = msg + e.Description + "<#CR>"
                 msg = msg + "[Line: " + e.Line + "] " + e.Text + "<#CR>"
                 msgbox(msg)
+                exitexit
             endif
         endtry
     fend
     
     
-    function Start(JSControl, driverpath, port = 0, capabilities = EMPTY)
+    function Start(driverpath, port = 0, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
         if ! length(driverversion) then
@@ -86,11 +86,20 @@ module WebDriver
             endif
         endif
         sleep(2)
-        result = JSControl.CodeObject.WebDriver.Start(port, capabilities, debug)
+        sc = NewScriptControl()
+        result = sc.CodeObject.WebDriver.Start(port, capabilities, debug)
+        JSControl[result.sessionId] = sc
+        print "driver"
+        print result.sessionId
+        print "sc"
+        print sc
+        print "JSControl[result.sessionId]"
+        print JSControl[result.sessionId]
+        print
     fend
 
-    function GetLog(JSControl)
-        result = JSControl.CodeObject.WebDriver.GetLog()
+    function GetLog(driver)
+        result = JSControl[driver.sessionId].CodeObject.WebDriver.GetLog()
     fend
     
     textblock EdgeCapabilities
@@ -318,9 +327,9 @@ Element.prototype.SaveScreenshot = function(path) {
 
     endtextblock
     
-    function GetError(JSControl)
+    function GetError(driver)
         result = ""
-        with JSControl.Error
+        with JSControl[driver.sessionId].Error
                 result = result + "Number      :" + .Number + "<#CR>"
                 result = result + "Source      :" + .Source + "<#CR>"
                 result = result + "Description :" + .Description + "<#CR>"
