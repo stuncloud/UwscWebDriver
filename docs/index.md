@@ -76,7 +76,18 @@ cssセレクタを指定して該当する複数のエレメントの `webelemen
         webelementオブジェクト配列 (SafeArray)
     - 失敗時  
         null
-    
+
+##### FindElementsByName(name)
+
+name属性の値を指定して該当する複数のエレメントの `webelementオブジェクト` を取得します
+
+- selector  
+    対象エレメントのname属性
+- 戻り値  
+    - 成功時  
+        webelementオブジェクト配列 (SafeArray)
+    - 失敗時  
+        null
 
 ##### Close()
 
