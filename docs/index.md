@@ -25,6 +25,21 @@ WebDriverを起動して、セッションIDを取得します
     - 失敗時  
         null
 
+##### WebDriver.CreateJSArray()
+
+JavaScriptの配列を得ます  
+`push()` で要素を追加できます
+
+- 戻り値  
+    空のJavaScript配列
+
+```
+arr = WebDriver.CreateJSArray()
+arr.push("hoge")
+arr.push("fuga")
+arr.push("piyo")
+```
+
 ##### WebDriver.GetError()
 
 `webdriverオブジェクト` や`webelementオブジェクト` 起因のCOMエラーが発生した際のエラー詳細を得ます
@@ -88,6 +103,38 @@ name属性の値を指定して該当する複数のエレメントの `webeleme
         webelementオブジェクト配列 (SafeArray)
     - 失敗時  
         null
+
+##### ExecuteScript(script[, args])
+
+任意のJavaScriptを実行させます
+
+- script  
+    JavaScriptのスクリプト構文  
+- args  
+    JavaScript配列 (省略可)  
+    実行するスクリプトに渡したい値を指定します
+    `script` 内で `arguments[]` としてこの値にアクセスできます
+- 戻り値  
+    `script` 内で `return` した値
+
+```
+elem = driver.FindElement(selector)
+
+textblock js
+arguments[0].style.backgroungColor = arguments[1];
+return arguments[0].outerHTML;
+endtextblock
+
+// js配列を作る
+args = WebDriver.CreateJSArray()
+// js要素を足す
+// elementオブジェクトも渡せる、その場合raw()メソッドを使う
+args.push(elem.raw())
+// 文字列とかでも当然OK
+args.push("red")
+
+driver.ExecuteScript(js, args)
+```
 
 ##### Close()
 
@@ -172,3 +219,11 @@ inputやselect等のvalueの値を取得します
 
 - 戻り値  
     bool値
+
+##### raw()
+
+WebDriverが返す元々のJavaScriptオブジェクトを得る  
+`ExecuteScript()` の `args` に渡す場合に使う
+
+- 戻り値  
+    jsオブジェクト
