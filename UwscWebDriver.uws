@@ -207,9 +207,9 @@ WebDriver.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.request('POST', api, body);
-    if (! r && r.status != 0)
-        return null;
-    return new Element(this, r.value.ELEMENT, r.value);
+    if (r.value.ELEMENT)
+        return new Element(this, r.value.ELEMENT, r.value);
+    return null;
 };
 
 WebDriver.prototype.FindElements = function(selector) {
@@ -328,9 +328,9 @@ Element.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.driver.request('POST', api, body);
-    if (! r && r.status != 0)
-        return null;
-    return new Element(this.driver, r.value.ELEMENT, r.value);
+    if (r.value.ELEMENT)
+        return new Element(this.driver, r.value.ELEMENT, r.value);
+    return null;
 };
 
 Element.prototype.FindElements = function(selector) {
