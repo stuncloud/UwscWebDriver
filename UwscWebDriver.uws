@@ -127,7 +127,9 @@ WebDriver.Start = function(port, capabilities, debug) {
     r = WebDriver._request('POST', api, body, port, debug);
     if (r) {
         var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
-        return new WebDriver(sessionId, port, debug);
+        var d = new WebDriver(sessionId, port, debug);
+        d.SetImplicitWait(10000);
+        return d;
     }
     return null;
 };
@@ -169,6 +171,12 @@ WebDriver._request = function(method, api, body, port, debug) {
 
 WebDriver.prototype.request = function(method, api, body) {
     return WebDriver._request(method, api, body, this.port, this.debug);
+};
+
+WebDriver.prototype.SetImplicitWait = function(millisec) {
+    var api = this.apibase + '/timeouts'
+    var body = {"implicit": millisec};
+    return this.request('POST', api, body);
 };
 
 WebDriver.prototype.Navigate = function(url, target) {
