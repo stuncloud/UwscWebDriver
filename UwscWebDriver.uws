@@ -1,5 +1,7 @@
 
 module WebDriver
+    const MODULE_VERSION = "0.1.0"
+
     dim debug = FALSE
     const Chrome  = "chromedriver.exe"
     const Firefox = "geckodriver.exe"
@@ -42,6 +44,10 @@ module WebDriver
 
     procedure Debug(b = TRUE)
         debug = b
+    fend
+    
+    function Version()
+        result = MODULE_VERSION
     fend
     
     
