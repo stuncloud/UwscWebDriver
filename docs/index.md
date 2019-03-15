@@ -54,12 +54,22 @@ WebDriver.Start() が返すオブジェクトです
 
 #### メソッド
 
-##### Navigate(url)
+##### Navigate(url[, target])
 
 - url  
     指定したURLを開きます
+- target  
+    省略可  
+    値を指定した場合は別タブで開かれます
 - 戻り値  
     なし
+
+```
+// 任意のURLを開く
+driver.Navigate(url)
+// 任意のURLを別タブで開く
+driver.Navigate(url, "_blank")
+```
 
 ##### GetUrl()
 
