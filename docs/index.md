@@ -71,6 +71,52 @@ driver.Navigate(url)
 driver.Navigate(url, "_blank")
 ```
 
+##### SwitchWindow(handleOrName)
+
+別のウィンドウ(タブ)に制御を移します
+
+- handleOrName  
+    ウィンドウハンドル、またはウィンドウ名  
+    ウィンドウ名は `window.name` です  
+    targetで別名指定されていた場合などに使います  
+    ただしハンドルを指定するより遅いです
+- 戻り値  
+    制御を移したウィンドウのハンドル
+
+```
+// 元のタブのウィンドウハンドルを得る
+hFirst = driver.GetCurrentWindowHandle()
+// 別タブを開く
+driver.Navigate(url, "SecondTab")
+// 別タブに制御を移す
+hSecond = driver.SwitchWindow("SecondTab")
+// 元のウィンドウに戻る
+driver.SwitchWindow(hFirst)
+```
+
+##### GetCurrentWindowHandle()
+
+現在の制御対象ウィンドウのハンドルを得ます
+
+- 戻り値  
+    ウィンドウハンドル
+
+##### GetWindowHandles()
+
+制御可能なウィンドウのハンドルを列挙します
+
+- 戻り値  
+    ウィンドウハンドルの配列(SafeArray)
+
+```
+for h in driver.GetWindowHandles()
+    driver.SwitchWindow(h)
+
+    // それぞれのウィンドウに対する処理を実行
+    DoSomoThing(driver)
+next
+```
+
 ##### GetUrl()
 
 現在開いているページのURLを取得します

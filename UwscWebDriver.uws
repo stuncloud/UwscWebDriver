@@ -147,6 +147,22 @@ WebDriver.NewJSArray = function() {
     return [];
 }
 
+WebDriver.Contains = function(arr, value) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] === value)
+            return true;
+    }
+    return false;
+}
+
+WebDriver.ConvertToSaveArray = function(arr) {
+    var dictionary = new ActiveXObject("Scripting.Dictionary");
+    for (var i = 0; i < arr.length; i++) {
+        dictionary.add(i, arr[i]);
+    }
+    return dictionary.Items();
+}
+
 WebDriver._request = function(method, api, body, port, debug) {
     var uri = "http://localhost:" + port + api;
     var xhr = new ActiveXObject("Msxml2.XMLHTTP");
@@ -192,6 +208,53 @@ WebDriver.prototype.Navigate = function(url, target) {
                + "tmp = null;"
     var args = [url, target];
     return this.ExecuteScript(script, args);
+};
+
+
+WebDriver.prototype.SwitchWindow = function(handleOrName) {
+    var handles = this._getWindowHandles();
+    var api = this.apibase + '/window'
+    var body, name
+    if (WebDriver.Contains(handles, handleOrName)) {
+        body = {
+            "handle": handleOrName,
+            "name": ""
+        };
+        this.request('POST', api, body);
+        r = this.request('GET', api);
+        return r.value;
+    } else {
+        for (var i = 0; i < handles.length; i++) {
+            body = {
+                "handle": handles[i],
+                "name": handleOrName
+            };
+            this.request('POST', api, body);
+            name = this.ExecuteScript('return window.name;');
+            if (name == handleOrName) {
+                r = this.request('GET', api);
+                return r.value;
+            }
+        }
+    }
+    return null;
+};
+
+WebDriver.prototype.GetCurrentWindowHandle = function() {
+    var api = this.apibase + '/window'
+    r = this.request('GET', api);
+    return r.value;
+};
+
+WebDriver.prototype._getWindowHandles = function() {
+    var api = this.apibase + '/window/handles'
+    r = this.request('GET', api);
+    return r.value;
+};
+
+WebDriver.prototype.GetWindowHandles = function() {
+    var handles = this._getWindowHandles();
+    return WebDriver.ConvertToSaveArray(handles);
 };
 
 WebDriver.prototype.GetUrl = function() {
@@ -245,6 +308,7 @@ WebDriver.prototype.SaveScreenshot = function(path) {
 
 WebDriver.prototype.ExecuteScript = function(script, args) {
     var api = this.apibase + '/execute/sync'
+    args = args || [];
     var body = {
         "script": script,
         "args": args
