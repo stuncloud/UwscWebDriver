@@ -87,6 +87,11 @@ module WebDriver
         result = CodeObject.WebDriver.Start(port, capabilities, debug)
     fend
 
+    function CreateJSArray()
+        result = CodeObject.WebDriver.NewJSArray()
+    fend
+    
+
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
     fend
@@ -122,7 +127,9 @@ WebDriver.Start = function(port, capabilities, debug) {
     r = WebDriver._request('POST', api, body, port, debug);
     if (r) {
         var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
-        return new WebDriver(sessionId, port, debug);
+        var d = new WebDriver(sessionId, port, debug);
+        d.SetImplicitWait(10000);
+        return d;
     }
     return null;
 };
@@ -134,6 +141,26 @@ WebDriver.GetLog = function() {
         d.add(i, WebDriver.Log[i]);
     }
     return d.Items();
+}
+
+WebDriver.NewJSArray = function() {
+    return [];
+}
+
+WebDriver.Contains = function(arr, value) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] === value)
+            return true;
+    }
+    return false;
+}
+
+WebDriver.ConvertToSaveArray = function(arr) {
+    var dictionary = new ActiveXObject("Scripting.Dictionary");
+    for (var i = 0; i < arr.length; i++) {
+        dictionary.add(i, arr[i]);
+    }
+    return dictionary.Items();
 }
 
 WebDriver._request = function(method, api, body, port, debug) {
@@ -162,10 +189,72 @@ WebDriver.prototype.request = function(method, api, body) {
     return WebDriver._request(method, api, body, this.port, this.debug);
 };
 
-WebDriver.prototype.Navigate = function(url) {
+WebDriver.prototype.SetImplicitWait = function(millisec) {
+    var api = this.apibase + '/timeouts'
+    var body = {"implicit": millisec};
+    return this.request('POST', api, body);
+};
+
+WebDriver.prototype.Navigate = function(url, target) {
     var api = this.apibase + '/url'
     var body = {"url": url};
-    return this.request('POST', api, body);
+    if (! target) {
+        return this.request('POST', api, body);
+    }
+    var script = "var tmp = document.createElement('a');"
+               + "tmp.href = arguments[0];"
+               + "tmp.target = arguments[1];"
+               + "tmp.click();"
+               + "tmp = null;"
+    var args = [url, target];
+    return this.ExecuteScript(script, args);
+};
+
+
+WebDriver.prototype.SwitchWindow = function(handleOrName) {
+    var handles = this._getWindowHandles();
+    var api = this.apibase + '/window'
+    var body, name
+    if (WebDriver.Contains(handles, handleOrName)) {
+        body = {
+            "handle": handleOrName,
+            "name": ""
+        };
+        this.request('POST', api, body);
+        r = this.request('GET', api);
+        return r.value;
+    } else {
+        for (var i = 0; i < handles.length; i++) {
+            body = {
+                "handle": handles[i],
+                "name": handleOrName
+            };
+            this.request('POST', api, body);
+            name = this.ExecuteScript('return window.name;');
+            if (name == handleOrName) {
+                r = this.request('GET', api);
+                return r.value;
+            }
+        }
+    }
+    return null;
+};
+
+WebDriver.prototype.GetCurrentWindowHandle = function() {
+    var api = this.apibase + '/window'
+    r = this.request('GET', api);
+    return r.value;
+};
+
+WebDriver.prototype._getWindowHandles = function() {
+    var api = this.apibase + '/window/handles'
+    r = this.request('GET', api);
+    return r.value;
+};
+
+WebDriver.prototype.GetWindowHandles = function() {
+    var handles = this._getWindowHandles();
+    return WebDriver.ConvertToSaveArray(handles);
 };
 
 WebDriver.prototype.GetUrl = function() {
@@ -181,9 +270,9 @@ WebDriver.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.request('POST', api, body);
-    if (! r && r.status != 0)
-        return null;
-    return new Element(this, r.value.ELEMENT);
+    if (r.value.ELEMENT)
+        return new Element(this, r.value.ELEMENT, r.value);
+    return null;
 };
 
 WebDriver.prototype.FindElements = function(selector) {
@@ -197,7 +286,7 @@ WebDriver.prototype.FindElements = function(selector) {
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
-        dictionary.add(i, new Element(this, r.value[i].ELEMENT));
+        dictionary.add(i, new Element(this, r.value[i].ELEMENT, r.value[i]));
     }
     return dictionary.Items();
 };
@@ -217,6 +306,17 @@ WebDriver.prototype.SaveScreenshot = function(path) {
     WebDriver._saveScreenshot(r.value, path);
 };
 
+WebDriver.prototype.ExecuteScript = function(script, args) {
+    var api = this.apibase + '/execute/sync'
+    args = args || [];
+    var body = {
+        "script": script,
+        "args": args
+    };
+    r = this.request('POST', api, body);
+    return r.value;
+};
+
 WebDriver._saveScreenshot = function(base64, path) {
     var xmldom = new ActiveXObject('Microsoft.XMLDOM');
     var elem = xmldom.createElement("base64");
@@ -233,10 +333,15 @@ WebDriver._saveScreenshot = function(base64, path) {
 }
 
 /* Elementオブジェクト */
-var Element = function(driver, elementId) {
+var Element = function(driver, elementId, elementObject) {
     this.driver = driver;
     this.elementId = elementId;
+    this.object = elementObject;
     this.apibase = '/session/' + this.driver.sessionId + '/element/' + this.elementId;
+};
+
+Element.prototype.raw = function() {
+    return this.object;
 };
 
 Element.prototype.Click = function() {
@@ -287,9 +392,9 @@ Element.prototype.FindElement = function(selector) {
         "value": selector
     };
     r = this.driver.request('POST', api, body);
-    if (! r && r.status != 0)
-        return null;
-    return new Element(this.driver, r.value.ELEMENT);
+    if (r.value.ELEMENT)
+        return new Element(this.driver, r.value.ELEMENT, r.value);
+    return null;
 };
 
 Element.prototype.FindElements = function(selector) {
@@ -303,7 +408,7 @@ Element.prototype.FindElements = function(selector) {
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
-        dictionary.add(i, new Element(this.driver, r.value[i].ELEMENT));
+        dictionary.add(i, new Element(this.driver, r.value[i].ELEMENT, r.value[i]));
     }
     return dictionary.Items();
 };
