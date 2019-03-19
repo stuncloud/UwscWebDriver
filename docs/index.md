@@ -4,6 +4,13 @@
 
 #### 関数
 
+##### WebDriver.Version()
+
+モジュールのバージョンを得ます
+
+- 戻り値  
+    モジュールのバージョン
+
 ##### WebDriver.Start(driverpath[, port])
 
 WebDriverを起動して、セッションIDを取得します  
