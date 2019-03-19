@@ -192,6 +192,38 @@ args.push("red")
 driver.ExecuteScript(js, args)
 ```
 
+##### GetDialogText()
+
+`window.alert()`, `window.confirm()`, `window.prompt()` で表示されたダイアログのテキストを取得します
+
+- 戻り値  
+    ダイアログに表示されたテキスト
+
+##### SetDialogText(value)
+
+`window.prompt()` で表示されたプロンプトに値を入力します  
+`window.alert()`, `window.confirm()` に対しては無効です
+
+- value  
+    ダイアログに入力する値
+- 戻り値  
+    なし
+
+##### AcceptDialog()
+
+`window.alert()`, `window.confirm()`, `window.prompt()` のOKボタンを押します
+
+- 戻り値  
+    なし
+
+##### DismissDialog()
+
+`window.alert()`, `window.confirm()`, `window.prompt()` のキャンセルボタンを押します  
+(`window.alert()` にキャンセルボタンはありませんが閉じられます)
+
+- 戻り値  
+    なし
+
 ##### Close()
 
 セッションを終了しブラウザを閉じます  

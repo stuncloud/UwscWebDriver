@@ -306,6 +306,38 @@ WebDriver.prototype.Close = function() {
     return this.request('DELETE', api);
 };
 
+WebDriver.prototype.GetDialogText = function() {
+    var api = this.apibase + '/alert/text';
+    var r = this.request('GET', api);
+    if (r.value.error)
+        return null;
+    return r.value;
+};
+
+WebDriver.prototype.SetDialogText = function(value) {
+    var api = this.apibase + '/alert/text';
+    var body = {
+        text: value,
+        value: value.split('')
+    };
+    this.request('POST', api, body);
+    return null;
+};
+
+WebDriver.prototype.AcceptDialog = function() {
+    var api = this.apibase + '/alert/accept';
+    var body = {};
+    this.request('POST', api), body;
+    return;
+};
+
+WebDriver.prototype.DismissDialog = function() {
+    var api = this.apibase + '/alert/dismiss';
+    var body = {};
+    this.request('POST', api), body;
+    return;
+};
+
 WebDriver.prototype.SaveScreenshot = function(path) {
     var api = this.apibase + '/screenshot'
     r = this.request('GET', api);
