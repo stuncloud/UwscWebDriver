@@ -64,3 +64,8 @@ https://stuncloud.github.io/UwscWebDriver/
 - sample.uws  
     [日本Seleniumユーザーコミュニティにあるテスト用サイト](http://www.selenium.jp/test-site) を使ったサンプルです
 
+質問や不具合の報告など
+----------------------
+
+[こちら](https://github.com/stuncloud/UwscWebDriver/issues) でお願いします  
+[UWSC仮掲示板](http://www3.rocketbbs.com/601/siromasa.html) でも気付けば反応します
