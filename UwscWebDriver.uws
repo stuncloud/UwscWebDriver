@@ -60,16 +60,20 @@ module WebDriver
             exit
         endif
 
+        dim verbose = ""
         select TRUE
             case pos(Chrome, driverpath) > 0
                 capabilities = ChromeCapabilities
                 if port = 0 then port = 9515
+                if this.debug then verbose = " --verbose"
             case pos(Edge, driverpath) > 0
                 if port = 0 then port = 17556
                 capabilities = EdgeCapabilities
+                if this.debug then verbose = " --verbose"
             case pos(Firefox, driverpath) > 0
                 if port = 0 then port = 7055
                 capabilities = ChromeCapabilities
+                if this.debug then verbose = " -v"
             default
                 if port = 0 then 
                     msgbox("ポート番号を指定してください")
@@ -80,7 +84,7 @@ module WebDriver
                 endif
         selend
         
-        cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + " --verbose"
+        cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + verbose
         if ! Process.Find(cmd) then
             doscmd(cmd, TRUE, TRUE)
             if ! Process.Wait(port) then
