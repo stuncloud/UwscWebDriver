@@ -111,6 +111,10 @@ module WebDriver
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
     fend
+
+    function ClearLog()
+        result = CodeObject.WebDriver.ClearLog()
+    fend
     
     textblock EdgeCapabilities
         {
@@ -157,6 +161,10 @@ WebDriver.GetLog = function() {
         d.add(i, WebDriver.Log[i]);
     }
     return d.Items();
+}
+
+WebDriver.ClearLog = function() {
+    WebDriver.Log = [];
 }
 
 WebDriver.NewJSArray = function() {
