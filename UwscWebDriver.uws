@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.1.1"
+    const MODULE_VERSION = "0.1.2"
 
     dim debug = FALSE
     const Chrome  = "chromedriver.exe"
@@ -63,16 +63,22 @@ module WebDriver
         dim verbose = ""
         select TRUE
             case pos(Chrome, driverpath) > 0
-                capabilities = ChromeCapabilities
+                if capabilities = EMPTY then
+                    capabilities = ChromeCapabilities
+                endif
                 if port = 0 then port = 9515
                 if this.debug then verbose = " --verbose"
             case pos(Edge, driverpath) > 0
                 if port = 0 then port = 17556
-                capabilities = EdgeCapabilities
+                    if capabilities = EMPTY then
+                    capabilities = EdgeCapabilities
+                endif
                 if this.debug then verbose = " --verbose"
             case pos(Firefox, driverpath) > 0
                 if port = 0 then port = 7055
-                capabilities = ChromeCapabilities
+                    if capabilities = EMPTY then
+                    capabilities = ChromeCapabilities
+                endif
                 if this.debug then verbose = " -v"
             default
                 if port = 0 then 
@@ -104,6 +110,10 @@ module WebDriver
 
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
+    fend
+
+    function ClearLog()
+        result = CodeObject.WebDriver.ClearLog()
     fend
     
     textblock EdgeCapabilities
@@ -151,6 +161,10 @@ WebDriver.GetLog = function() {
         d.add(i, WebDriver.Log[i]);
     }
     return d.Items();
+}
+
+WebDriver.ClearLog = function() {
+    WebDriver.Log = [];
 }
 
 WebDriver.NewJSArray = function() {
