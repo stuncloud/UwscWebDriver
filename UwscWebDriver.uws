@@ -294,8 +294,15 @@ WebDriver.prototype.FindElement = function(selector) {
         "value": selector
     };
     var r = this.request('POST', api, body);
-    if (r.value.ELEMENT)
+    if (r.value.ELEMENT) {
         return new Element(this, r.value.ELEMENT, r.value);
+    } else {
+        for (var key in r.value) {
+            if (key.match(/element/)) {
+                return new Element(this, r.value[key], r.value);
+            }
+        }
+    }
     return null;
 };
 
@@ -310,7 +317,18 @@ WebDriver.prototype.FindElements = function(selector) {
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
-        dictionary.add(i, new Element(this, r.value[i].ELEMENT, r.value[i]));
+        var eid;
+        if (r.value[i].ELEMENT) {
+            eid = r.value[i].ELEMENT;
+        } else {
+            for (var key in r.value[i]) {
+                if (key.match(/element/)) {
+                    eid = r.value[i][key];
+                    break
+                }
+            }
+        }
+        dictionary.add(i, new Element(this, eid, r.value[i]));
     }
     return dictionary.Items();
 };
@@ -345,14 +363,14 @@ WebDriver.prototype.SetDialogText = function(value) {
 WebDriver.prototype.AcceptDialog = function() {
     var api = this.apibase + '/alert/accept';
     var body = {};
-    this.request('POST', api), body;
+    this.request('POST', api, body);
     return;
 };
 
 WebDriver.prototype.DismissDialog = function() {
     var api = this.apibase + '/alert/dismiss';
     var body = {};
-    this.request('POST', api), body;
+    this.request('POST', api, body);
     return;
 };
 
@@ -402,12 +420,14 @@ Element.prototype.raw = function() {
 
 Element.prototype.Click = function() {
     var api = this.apibase + '/click';
-    return this.driver.request('POST', api);
+    var body = {};
+    return this.driver.request('POST', api, body);
 };
 
 Element.prototype.Clear = function() {
     var api = this.apibase + '/clear';
-    return this.driver.request('POST', api);
+    var body = {};
+    return this.driver.request('POST', api, body);
 };
 
 Element.prototype.SetValue = function(value) {
@@ -420,7 +440,9 @@ Element.prototype.SetValue = function(value) {
 };
 
 Element.prototype.GetValue = function() {
-    return this.GetAttribute('value');
+    var js = 'return arguments[0].value;';
+    var args = [this.object];
+    return this.driver.ExecuteScript(js, args);
 };
 
 Element.prototype.GetText = function() {
@@ -431,8 +453,13 @@ Element.prototype.GetText = function() {
 
 Element.prototype.GetAttribute = function(attribute) {
     var api = this.apibase + '/attribute/' + attribute;
-    var r = this.driver.request('GET', api);
-    return r.value;
+    var body = {};
+    var r = this.driver.request('GET', api, body);
+    if (r.value)
+        return r.value;
+    var js = 'return arguments[0].getAttribute(arguments[1]);';
+    var args = [this.raw(), attribute]
+    return this.driver.ExecuteScript(js, args);
 };
 
 Element.prototype.IsSelected = function() {
@@ -448,8 +475,15 @@ Element.prototype.FindElement = function(selector) {
         "value": selector
     };
     var r = this.driver.request('POST', api, body);
-    if (r.value.ELEMENT)
+    if (r.value.ELEMENT) {
         return new Element(this.driver, r.value.ELEMENT, r.value);
+    } else {
+        for (var key in r.value) {
+            if (key.match(/element/)) {
+                return new Element(this.driver, r.value[key], r.value);
+            }
+        }
+    }
     return null;
 };
 
@@ -464,7 +498,18 @@ Element.prototype.FindElements = function(selector) {
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < r.value.length; i++) {
-        dictionary.add(i, new Element(this.driver, r.value[i].ELEMENT, r.value[i]));
+        var eid;
+        if (r.value[i].ELEMENT) {
+            eid = r.value[i].ELEMENT;
+        } else {
+            for (var key in r.value[i]) {
+                if (key.match(/element/)) {
+                    eid = r.value[i][key];
+                    break
+                }
+            }
+        }
+        dictionary.add(i, new Element(this.driver, eid, r.value[i]));
     }
     return dictionary.Items();
 };
@@ -483,7 +528,7 @@ Element.prototype.SaveScreenshot = function(path) {
             if .Number then
                 result = result + "Number      :" + .Number + "<#CR>"
                 result = result + "Source      :" + .Source + "<#CR>"
-                result = result + "Description :" + .Description //+ "<#CR>"
+                result = result + "Description :" + .Description + "<#CR>"
                 // result = result + "HelpFile    :" + .HelpFile + "<#CR>"
                 // result = result + "HelpContext :" + .HelpContext + "<#CR>"
                 result = result + "Text        :" + .Text + "<#CR>"
