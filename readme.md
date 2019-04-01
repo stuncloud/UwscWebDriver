@@ -37,6 +37,43 @@ WebDriver導入方法
 
 WebDriverのexeを実行するスクリプトと同じフォルダに置いてください
 
+### PackageManagementによるWebDriverの導入
+
+PowerShellのパッケージ管理を利用したインストール方法です  
+Windows10では標準で使えます  
+8.1や7は別途PackageManagementを導入する必要があります
+
+以下はすべて「管理者として実行」したPowerShellで実行してください
+
+#### ChocolateyGetの導入方法
+
+ChocolateyGetがインストールされていない場合は以下を実行します
+
+```PowerShell
+Install-PackageProvider -Name ChocolateyGet
+Import-PackageProvider -Name ChocolateyGet
+```
+
+#### WebDriverのインストール
+
+- 途中何度かpromptが表示されるので`y`を入力してください
+- `-Force`スイッチを付与することでpromptを省略できます
+
+PATHの通ったディレクトリに置かれるはずなのでこの方法でインストールすれば使えるようになります
+
+##### Chrome
+
+```PowerShell
+Install-Package -Provider ChocolateyGet -Name chromedriver
+```
+
+##### Firefox
+
+```PowerShell
+Install-Package -Provider ChocolateyGet -Name selenium-gecko-driver
+```
+
+
 jsonパーサ
 ----------
 
