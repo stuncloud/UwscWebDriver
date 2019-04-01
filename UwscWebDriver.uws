@@ -476,11 +476,11 @@ Element.prototype.FindElement = function(selector) {
     };
     var r = this.driver.request('POST', api, body);
     if (r.value.ELEMENT) {
-        return new Element(this, r.value.ELEMENT, r.value);
+        return new Element(this.driver, r.value.ELEMENT, r.value);
     } else {
         for (var key in r.value) {
             if (key.match(/element/)) {
-                return new Element(this, r.value[key], r.value);
+                return new Element(this.driver, r.value[key], r.value);
             }
         }
     }
@@ -509,7 +509,7 @@ Element.prototype.FindElements = function(selector) {
                 }
             }
         }
-        dictionary.add(i, new Element(this, eid, r.value[i]));
+        dictionary.add(i, new Element(this.driver, eid, r.value[i]));
     }
     return dictionary.Items();
 };
