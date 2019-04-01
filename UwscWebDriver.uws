@@ -363,14 +363,14 @@ WebDriver.prototype.SetDialogText = function(value) {
 WebDriver.prototype.AcceptDialog = function() {
     var api = this.apibase + '/alert/accept';
     var body = {};
-    this.request('POST', api), body;
+    this.request('POST', api, body);
     return;
 };
 
 WebDriver.prototype.DismissDialog = function() {
     var api = this.apibase + '/alert/dismiss';
     var body = {};
-    this.request('POST', api), body;
+    this.request('POST', api, body);
     return;
 };
 
@@ -440,7 +440,9 @@ Element.prototype.SetValue = function(value) {
 };
 
 Element.prototype.GetValue = function() {
-    return this.GetAttribute('value');
+    var js = 'return arguments[0].value;';
+    var args = [this.object];
+    return this.driver.ExecuteScript(js, args);
 };
 
 Element.prototype.GetText = function() {
@@ -453,7 +455,11 @@ Element.prototype.GetAttribute = function(attribute) {
     var api = this.apibase + '/attribute/' + attribute;
     var body = {};
     var r = this.driver.request('GET', api, body);
-    return r.value;
+    if (r.value)
+        return r.value;
+    var js = 'return arguments[0].getAttribute(arguments[1]);';
+    var args = [this.raw(), attribute]
+    return this.driver.ExecuteScript(js, args);
 };
 
 Element.prototype.IsSelected = function() {
