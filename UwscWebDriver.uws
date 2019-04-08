@@ -100,8 +100,15 @@ module WebDriver
             endif
         endif
         sleep(2)
-        result = CodeObject.WebDriver.Start(port, capabilities, debug)
+        uri = "http://localhost:" + port
+        result = CodeObject.WebDriver.Start(uri, capabilities, debug)
     fend
+
+    function Remote(remotehost, port, capabilities)
+        uri = "http://" + remotehost + ":" + port + "/wd/hub"
+        result = CodeObject.WebDriver.Start(uri, capabilities, debug)
+    fend
+    
 
     function CreateJSArray()
         result = CodeObject.WebDriver.NewJSArray()
@@ -129,25 +136,42 @@ module WebDriver
         }
     endtextblock
     
+    textblock RemoteEdgeCapabilities
+        {
+            "desiredCapabilities": {
+                "browserName": "MicrosoftEdge",
+            }
+        }
+    endtextblock
+
+    textblock RemoteChromeCapabilities
+        {
+            "desiredCapabilities": {
+                "browserName": "chrome",
+                "goog:chromeOptions": {}
+            }
+        }
+    endtextblock
+    
 
     textblock jsStatement
 /* WebDriverオブジェクト */
-var WebDriver = function(sessionId, port, debug) {
+var WebDriver = function(sessionId, uribase, debug) {
+    this.uribase = uribase;
     this.sessionId = sessionId;
-    this.port = port;
     this.debug = debug;
     this.apibase = '/session/' + this.sessionId;
 };
 
-WebDriver.Start = function(port, capabilities, debug) {
+WebDriver.Start = function(uribase, capabilities, debug) {
     if (capabilities)
         capabilities = JSON.parse(capabilities);
-    var api = '/session';
+    var uri = uribase + '/session';
     var body = capabilities;
-    r = WebDriver._request('POST', api, body, port, debug);
+    r = WebDriver._request('POST', uri, body, debug);
     if (r) {
         var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
-        var d = new WebDriver(sessionId, port, debug);
+        var d = new WebDriver(sessionId, uribase, debug);
         d.SetImplicitWait(10000);
         return d;
     }
@@ -187,8 +211,7 @@ WebDriver.ConvertToSaveArray = function(arr) {
     return dictionary.Items();
 }
 
-WebDriver._request = function(method, api, body, port, debug) {
-    var uri = "http://localhost:" + port + api;
+WebDriver._request = function(method, uri, body, debug) {
     var xhr = new ActiveXObject("Msxml2.XMLHTTP");
     xhr.open(method, uri, false);
     xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
@@ -196,7 +219,7 @@ WebDriver._request = function(method, api, body, port, debug) {
     xhr.send(strbody);
     if (debug) {
         WebDriver.Log.push({
-            "api": api,
+            "api": uri,
             "body": strbody,
             "status": xhr.status,
             "statusText": xhr.statusText,
@@ -210,7 +233,8 @@ WebDriver._request = function(method, api, body, port, debug) {
 };
 
 WebDriver.prototype.request = function(method, api, body) {
-    return WebDriver._request(method, api, body, this.port, this.debug);
+    var uri = this.uribase + api;
+    return WebDriver._request(method, uri, body, this.debug);
 };
 
 WebDriver.prototype.SetImplicitWait = function(millisec) {
@@ -246,7 +270,8 @@ WebDriver.prototype.SwitchWindow = function(handleOrName) {
         };
         this.request('POST', api, body);
         var r = this.request('GET', api);
-        return r.value;
+        if (r)
+            return r.value;
     } else {
         for (var i = 0; i < handles.length; i++) {
             body = {
@@ -257,7 +282,8 @@ WebDriver.prototype.SwitchWindow = function(handleOrName) {
             name = this.ExecuteScript('return window.name;');
             if (name == handleOrName) {
                 var r = this.request('GET', api);
-                return r.value;
+                if (r)
+                    return r.value;
             }
         }
     }
@@ -273,7 +299,9 @@ WebDriver.prototype.GetCurrentWindowHandle = function() {
 WebDriver.prototype._getWindowHandles = function() {
     var api = this.apibase + '/window/handles';
     var r = this.request('GET', api);
-    return r.value;
+    if (r)
+        return r.value;
+    return [];
 };
 
 WebDriver.prototype.GetWindowHandles = function() {
@@ -284,7 +312,8 @@ WebDriver.prototype.GetWindowHandles = function() {
 WebDriver.prototype.GetUrl = function() {
     var api = this.apibase + '/url';
     var r = this.request('GET', api);
-    return r.value;
+    if (r)
+        return r.value;
 };
 
 WebDriver.prototype.FindElement = function(selector) {
@@ -345,9 +374,11 @@ WebDriver.prototype.Close = function() {
 WebDriver.prototype.GetDialogText = function() {
     var api = this.apibase + '/alert/text';
     var r = this.request('GET', api);
-    if (r.value.error)
-        return null;
-    return r.value;
+    if (r) {
+        if (r.value.error)
+            return null;
+        return r.value;
+    }
 };
 
 WebDriver.prototype.SetDialogText = function(value) {
@@ -380,15 +411,16 @@ WebDriver.prototype.SaveScreenshot = function(path) {
     WebDriver._saveScreenshot(r.value, path);
 };
 
-WebDriver.prototype.ExecuteScript = function(script, args) {
+WebDriver.prototype.ExecuteScript = function(js, args) {
     var api = this.apibase + '/execute/sync';
     args = args || [];
     var body = {
-        "script": script,
+        "script": js,
         "args": args
     };
     var r = this.request('POST', api, body);
-    return r.value;
+    if (r)
+        return r.value;
 };
 
 WebDriver._saveScreenshot = function(base64, path) {
@@ -440,15 +472,14 @@ Element.prototype.SetValue = function(value) {
 };
 
 Element.prototype.GetValue = function() {
-    var js = 'return arguments[0].value;';
-    var args = [this.object];
-    return this.driver.ExecuteScript(js, args);
+    return this.GetAttribute('value') || this.driver.ExecuteScript('return arguments[0].value;', [this.object]);
 };
 
 Element.prototype.GetText = function() {
     var api = this.apibase + '/text';
     var r = this.driver.request('GET', api);
-    return r.value;
+    if (r)
+        return r.value;
 };
 
 Element.prototype.GetAttribute = function(attribute) {
@@ -465,7 +496,8 @@ Element.prototype.GetAttribute = function(attribute) {
 Element.prototype.IsSelected = function() {
     var api = this.apibase + '/selected';
     var r = this.driver.request('GET', api);
-    return r.value;
+    if (r)
+        return r.value;
 };
 
 Element.prototype.FindElement = function(selector) {
