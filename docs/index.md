@@ -32,6 +32,26 @@ WebDriverを起動して、セッションIDを取得します
     - 失敗時  
         null
 
+##### WebDriver.Remote(remotehost, port, capabilities)
+
+`selenium-server-standalone.jar`を実行しているPC上のWebDriverに接続します
+
+- remotehost  
+    リモートPCのホスト名またはIPアドレス  
+    ローカルで`selenium-server-standalone.jar`を実行している場合は`localhost`
+- port  
+    Selenium standalone serverの待ち受けポートです
+    デフォルトは`4444`のようです
+- capabilities  
+    capabilitiesのjson文字列  
+    以下の定数が定義されています  
+    Edge: `WebDriver.RemoteEdgeCapabilities`  
+    Chrome: `WebDriver.RemoteChromeCapabilities`  
+
+```
+remotedriver = WebDriver.Remote("192.168.x.x", "4444", WebDriver.RemoteChromeCapabilities)
+```
+
 ##### WebDriver.CreateJSArray()
 
 JavaScriptの配列を得ます  
