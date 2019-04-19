@@ -40,7 +40,7 @@ WebDriverを起動して、セッションIDを取得します
     リモートPCのホスト名またはIPアドレス  
     ローカルで`selenium-server-standalone.jar`を実行している場合は`localhost`
 - port  
-    Selenium standalone serverの待ち受けポートです
+    Selenium standalone serverの待ち受けポートです  
     デフォルトは`4444`のようです
 - capabilities  
     capabilitiesのjson文字列  
@@ -80,6 +80,8 @@ arr.push("piyo")
 WebDriver.Start() が返すオブジェクトです  
 
 #### メソッド
+
+注意：メソッド名は大文字小文字まで一致している必要があります
 
 ##### Navigate(url[, target])
 
@@ -264,6 +266,8 @@ WebDriverは起動したままなので、WebDriverを終了させたい場合�
 `webdriverオブジェクト` や`webelementオブジェクト` の `FindElement()` および`FindElements()` が返すオブジェクトです
 
 #### メソッド
+
+注意：メソッド名は大文字小文字まで一致している必要があります
 
 ##### FindElement(selector)
 
