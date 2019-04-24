@@ -47,10 +47,27 @@ WebDriverを起動して、セッションIDを取得します
     以下の定数が定義されています  
     Edge: `WebDriver.RemoteEdgeCapabilities`  
     Chrome: `WebDriver.RemoteChromeCapabilities`  
+- 戻り値
+    - 成功時  
+        webdriverオブジェクト
+    - 失敗時  
+        null
 
 ```
 remotedriver = WebDriver.Remote("192.168.x.x", "4444", WebDriver.RemoteChromeCapabilities)
 ```
+
+##### WebDriver.Connect(session)
+
+以前のwebdriverセッションを再利用し、起動済みのブラウザを再び操作できるようにします
+
+- session  
+    `webdriver.GetSession()` で取得したセッション情報
+- 戻り値
+    - 成功時  
+        webdriverオブジェクト
+    - 失敗時  
+        null
 
 ##### WebDriver.CreateJSArray()
 
@@ -82,6 +99,13 @@ WebDriver.Start() が返すオブジェクトです
 #### メソッド
 
 注意：メソッド名は大文字小文字まで一致している必要があります
+
+#### GetSession()
+
+現在のwebdriverセッション情報を取得します
+
+- 戻り値  
+    セッション情報 (文字列)
 
 ##### Navigate(url[, target])
 
