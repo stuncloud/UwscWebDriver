@@ -104,6 +104,14 @@ module WebDriver
         result = CodeObject.WebDriver.Start(uri, capabilities, debug)
     fend
     
+    function Connect(session)
+        try
+            s = split(session, "|", TRUE)
+            result = CodeObject.WebDriver.Connect(s[0], s[1], debug)
+        except
+            result = NULL
+        endtry
+    fend
 
     function CreateJSArray()
         result = CodeObject.WebDriver.NewJSArray()
@@ -158,6 +166,10 @@ var WebDriver = function(sessionId, uribase, debug) {
     this.apibase = '/session/' + this.sessionId;
 };
 
+WebDriver.prototype.GetSession = function() {
+    return this.sessionId + '|' + this.uribase
+};
+
 WebDriver.Start = function(uribase, capabilities, debug) {
     if (capabilities)
         capabilities = JSON.parse(capabilities);
@@ -171,6 +183,17 @@ WebDriver.Start = function(uribase, capabilities, debug) {
         return d;
     }
     return null;
+};
+
+WebDriver.Connect = function(sessionId, uribase, debug) {
+    var d = new WebDriver(sessionId, uribase, debug);
+    // apiが通れば再接続成功
+    var r = d.request('GET', d.apibase + '/url');
+    if (! r)
+        return null; // edge, firefoxでエラー
+    if (r.status)
+        return null; // chromeでエラー
+    return d;
 };
 
 WebDriver.Log = [];
