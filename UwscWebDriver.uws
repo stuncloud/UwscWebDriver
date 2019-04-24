@@ -51,7 +51,7 @@ module WebDriver
     fend
     
     
-    function Start(driverpath, port = 0, capabilities = EMPTY)
+    function Start(driverpath, port = 9515, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
         if ! length(driverversion) then
@@ -61,30 +61,25 @@ module WebDriver
         endif
 
         dim verbose = ""
+
         select TRUE
             case pos(Chrome, driverpath) > 0
                 if capabilities = EMPTY then
                     capabilities = ChromeCapabilities
                 endif
-                if port = 0 then port = 9515
                 if this.debug then verbose = " --verbose"
             case pos(Edge, driverpath) > 0
-                if port = 0 then port = 17556
-                    if capabilities = EMPTY then
+                if capabilities = EMPTY then
                     capabilities = EdgeCapabilities
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(Firefox, driverpath) > 0
-                if port = 0 then port = 7055
-                    if capabilities = EMPTY then
+                if capabilities = EMPTY then
                     capabilities = ChromeCapabilities
                 endif
                 if this.debug then verbose = " -v"
             default
-                if port = 0 then 
-                    msgbox("ポート番号を指定してください")
-                    exitexit 
-                elseif capabilities = EMPTY then
+                if capabilities = EMPTY then
                     msgbox("Capabilityを指定してください")
                     exitexit
                 endif

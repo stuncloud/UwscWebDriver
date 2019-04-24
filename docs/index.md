@@ -11,7 +11,7 @@
 - 戻り値  
     モジュールのバージョン
 
-##### WebDriver.Start(driverpath[, port])
+##### WebDriver.Start(driverpath[, port[, capabilities]])
 
 WebDriverを起動して、セッションIDを取得します  
 (コマンドプロンプトの画面が表示されます)
