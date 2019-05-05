@@ -117,6 +117,10 @@ module WebDriver
         result = CodeObject.WebDriver.NewJSArray()
     fend
     
+    function ParseJson(json)
+        result = CodeObject.JSON.parse(json)
+    fend
+    
 
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
@@ -276,6 +280,11 @@ WebDriver.prototype.Navigate = function(url, target) {
     return this.ExecuteScript(script, args);
 };
 
+WebDriver.prototype.Reload = function() {
+    var api = this.apibase + '/refresh';
+    var body = {"url": ""};
+    this.request('POST', api, body);
+};
 
 WebDriver.prototype.SwitchWindow = function(handleOrName) {
     var handles = this._getWindowHandles();
@@ -329,6 +338,20 @@ WebDriver.prototype.GetWindowHandles = function() {
 
 WebDriver.prototype.GetUrl = function() {
     var api = this.apibase + '/url';
+    var r = this.request('GET', api);
+    if (r)
+        return r.value;
+};
+
+WebDriver.prototype.GetTitle = function() {
+    var api = this.apibase + '/title';
+    var r = this.request('GET', api);
+    if (r)
+        return r.value;
+};
+
+WebDriver.prototype.GetSource = function() {
+    var api = this.apibase + '/source';
     var r = this.request('GET', api);
     if (r)
         return r.value;

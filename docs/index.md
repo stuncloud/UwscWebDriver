@@ -124,6 +124,13 @@ driver.Navigate(url)
 driver.Navigate(url, "_blank")
 ```
 
+##### Reload()
+
+開いているページをリロードします
+
+- 戻り値  
+    なし
+
 ##### SwitchWindow(handleOrName)
 
 別のウィンドウ(タブ)に制御を移します
@@ -176,6 +183,20 @@ next
 
 - 戻り値  
     URL
+
+##### GetTitle()
+
+現在開いているページのタイトルを取得します
+
+- 戻り値  
+    タイトル
+
+##### GetSource()
+
+現在開いているページのHTMLソースを取得します
+
+- 戻り値  
+    HTMLソース
 
 ##### FindElement(selector)
 
