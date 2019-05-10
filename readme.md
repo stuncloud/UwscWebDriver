@@ -98,8 +98,12 @@ https://stuncloud.github.io/UwscWebDriver/
 サンプルスクリプト
 ------------------
 
-- sample.uws  
-    [日本Seleniumユーザーコミュニティにあるテスト用サイト](http://www.selenium.jp/test-site) を使ったサンプルです
+[日本Seleniumユーザーコミュニティにあるテスト用サイト](http://www.selenium.jp/test-site) を使ったサンプルです
+
+- sample.uws
+    - [その1](http://example.selenium.jp/reserveApp/)
+- sample2.uws
+    - [その2](http://example.selenium.jp/reserveApp_Renewal/)
 
 質問や不具合の報告など
 ----------------------
