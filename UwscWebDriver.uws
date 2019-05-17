@@ -162,27 +162,70 @@ module WebDriver
     
 
     textblock jsStatement
+/* WebRequestオブジェクト */
+var WebRequest = function(uribase) {
+    this.uribase = uribase;
+}
+WebRequest.debug = false;
+WebRequest.send = function(method, uri, body) {
+    var xhr = new ActiveXObject("Msxml2.XMLHTTP");
+    xhr.open(method, uri, false);
+    xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+    strbody = body ? JSON.stringify(body): null;
+    xhr.send(strbody);
+    if (WebRequest.debug) {
+        WebDriver.Log.push({
+            "api": uri,
+            "body": strbody,
+            "status": xhr.status,
+            "statusText": xhr.statusText,
+            "response": xhr.responseText
+        });
+    }
+    if (xhr.status === 200) {
+        return JSON.parse(xhr.responseText);
+    }
+    return null;
+};
+WebRequest.prototype.Get = function(api) {
+    var uri = this.uribase + api;
+    return WebRequest.send('GET', uri, null);
+}
+WebRequest.prototype.Post = function(api, body) {
+    var uri = this.uribase + api;
+    return WebRequest.send('POST', uri, body);
+}
+WebRequest.prototype.Put = function(api, body) {
+    var uri = this.uribase + api;
+    return WebRequest.send('PUT', uri, body);
+}
+WebRequest.prototype.Delete = function(api) {
+    var uri = this.uribase + api;
+    return WebRequest.send('DELETE', uri, null);
+}
+
 /* WebDriverオブジェクト */
-var WebDriver = function(sessionId, uribase, debug) {
+var WebDriver = function(sessionId, uribase) {
     this.uribase = uribase;
     this.sessionId = sessionId;
-    this.debug = debug;
-    this.apibase = '/session/' + this.sessionId;
+    var apibase = uribase + '/session/' + this.sessionId;
+    this.request = new WebRequest(apibase);
 };
 
 WebDriver.prototype.GetSession = function() {
-    return this.sessionId + '|' + this.uribase
+    return this.sessionId + '|' + this.uribase;
 };
 
 WebDriver.Start = function(uribase, capabilities, debug) {
+    WebRequest.debug = debug;
     if (capabilities)
         capabilities = JSON.parse(capabilities);
     var uri = uribase + '/session';
     var body = capabilities;
-    r = WebDriver._request('POST', uri, body, debug);
+    r = WebRequest.send('POST', uri, body);
     if (r) {
         var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
-        var d = new WebDriver(sessionId, uribase, debug);
+        var d = new WebDriver(sessionId, uribase);
         d.SetImplicitWait(10000);
         return d;
     }
@@ -190,9 +233,10 @@ WebDriver.Start = function(uribase, capabilities, debug) {
 };
 
 WebDriver.Connect = function(sessionId, uribase, debug) {
-    var d = new WebDriver(sessionId, uribase, debug);
+    WebRequest.debug = debug;
+    var d = new WebDriver(sessionId, uribase);
     // apiが通れば再接続成功
-    var r = d.request('GET', d.apibase + '/url');
+    var r = d.request.Get('/url');
     if (! r)
         return null; // edge, firefoxでエラー
     if (r.status)
@@ -233,70 +277,43 @@ WebDriver.ConvertToSaveArray = function(arr) {
     return dictionary.Items();
 }
 
-WebDriver._request = function(method, uri, body, debug) {
-    var xhr = new ActiveXObject("Msxml2.XMLHTTP");
-    xhr.open(method, uri, false);
-    xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
-    strbody = body ? JSON.stringify(body): null;
-    xhr.send(strbody);
-    if (debug) {
-        WebDriver.Log.push({
-            "api": uri,
-            "body": strbody,
-            "status": xhr.status,
-            "statusText": xhr.statusText,
-            "response": xhr.responseText
-        });
-    }
-    if (xhr.status === 200) {
-        return JSON.parse(xhr.responseText);
-    }
-    return null;
-};
-
-WebDriver.prototype.request = function(method, api, body) {
-    var uri = this.uribase + api;
-    return WebDriver._request(method, uri, body, this.debug);
-};
-
 WebDriver.prototype.SetImplicitWait = function(millisec) {
-    var api = this.apibase + '/timeouts';
+    var api = '/timeouts';
     var body = {"implicit": millisec};
-    return this.request('POST', api, body);
+    return this.request.Post(api, body);
 };
 
 WebDriver.prototype.Navigate = function(url, target) {
-    var api = this.apibase + '/url';
+    var api = '/url';
     var body = {"url": url};
     if (! target) {
-        return this.request('POST', api, body);
+        return this.request.Post(api, body);
     }
-    var script = "var tmp = document.createElement('a');"
-               + "tmp.href = arguments[0];"
-               + "tmp.target = arguments[1];"
-               + "tmp.click();"
-               + "tmp = null;";
-    var args = [url, target];
-    return this.ExecuteScript(script, args);
+    var js = "var tmp = document.createElement('a');"
+           + "tmp.href = arguments[0];"
+           + "tmp.target = arguments[1];"
+           + "tmp.click();"
+           + "tmp = null;";
+    return this.ExecuteScript(js, [url, target]);
 };
 
 WebDriver.prototype.Reload = function() {
-    var api = this.apibase + '/refresh';
+    var api = '/refresh';
     var body = {"url": ""};
-    this.request('POST', api, body);
+    this.request.Post(api, body);
 };
 
 WebDriver.prototype.SwitchWindow = function(handleOrName) {
     var handles = this._getWindowHandles();
-    var api = this.apibase + '/window';
+    var api = '/window';
     var body, name
     if (WebDriver.Contains(handles, handleOrName)) {
         body = {
             "handle": handleOrName,
             "name": ""
         };
-        this.request('POST', api, body);
-        var r = this.request('GET', api);
+        this.request.Post(api, body);
+        var r = this.request.Get(api);
         if (r)
             return r.value;
     } else {
@@ -305,10 +322,10 @@ WebDriver.prototype.SwitchWindow = function(handleOrName) {
                 "handle": handles[i],
                 "name": handleOrName
             };
-            this.request('POST', api, body);
+            this.request.Post(api, body);
             name = this.ExecuteScript('return window.name;');
             if (name == handleOrName) {
-                var r = this.request('GET', api);
+                var r = this.request.Get(api);
                 if (r)
                     return r.value;
             }
@@ -318,14 +335,14 @@ WebDriver.prototype.SwitchWindow = function(handleOrName) {
 };
 
 WebDriver.prototype.GetCurrentWindowHandle = function() {
-    var api = this.apibase + '/window';
-    var r = this.request('GET', api);
+    var api = '/window';
+    var r = this.request.Get(api);
     return r.value;
 };
 
 WebDriver.prototype._getWindowHandles = function() {
-    var api = this.apibase + '/window/handles';
-    var r = this.request('GET', api);
+    var api = '/window/handles';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
     return [];
@@ -337,52 +354,57 @@ WebDriver.prototype.GetWindowHandles = function() {
 };
 
 WebDriver.prototype.GetUrl = function() {
-    var api = this.apibase + '/url';
-    var r = this.request('GET', api);
+    var api = '/url';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
 };
 
 WebDriver.prototype.GetTitle = function() {
-    var api = this.apibase + '/title';
-    var r = this.request('GET', api);
+    var api = '/title';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
 };
 
 WebDriver.prototype.GetSource = function() {
-    var api = this.apibase + '/source';
-    var r = this.request('GET', api);
+    var api = '/source';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
 };
 
 WebDriver.prototype.FindElement = function(selector) {
-    var api = this.apibase + '/element';
+    var api = '/element';
     var body = {
         "using": "css selector",
         "value": selector
     };
-    var r = this.request('POST', api, body);
+    var r = this.request.Post(api, body);
+    var element, eid;
     if (r.value.ELEMENT) {
-        return new Element(this, r.value.ELEMENT, r.value);
+        eid = r.value.ELEMENT;
     } else {
         for (var key in r.value) {
             if (key.match(/element/)) {
-                return new Element(this, r.value[key], r.value);
+                eid = r.value[key];
+                break;
             }
         }
     }
-    return null;
+    if (eid) {
+        element = new WebElement(this.request.uribase, eid, r.value);
+    }
+    return element;
 };
 
 WebDriver.prototype.FindElements = function(selector) {
-    var api = this.apibase + '/elements';
+    var api = '/elements';
     var body = {
         "using": "css selector",
         "value": selector
     };
-    var r = this.request('POST', api, body);
+    var r = this.request.Post(api, body);
     if (! r && r.status != 0)
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
@@ -398,7 +420,8 @@ WebDriver.prototype.FindElements = function(selector) {
                 }
             }
         }
-        dictionary.add(i, new Element(this, eid, r.value[i]));
+        var element = new WebElement(this.request.uribase, eid, r.value[i]);
+        dictionary.add(i, element);
     }
     return dictionary.Items();
 };
@@ -408,13 +431,13 @@ WebDriver.prototype.FindElementsByName = function(name) {
 };
 
 WebDriver.prototype.Close = function() {
-    var api = this.apibase;
-    return this.request('DELETE', api);
+    var api = '';
+    this.request.Delete(api);
 };
 
 WebDriver.prototype.GetDialogText = function() {
-    var api = this.apibase + '/alert/text';
-    var r = this.request('GET', api);
+    var api = '/alert/text';
+    var r = this.request.Get(api);
     if (r) {
         if (r.value.error)
             return null;
@@ -423,45 +446,46 @@ WebDriver.prototype.GetDialogText = function() {
 };
 
 WebDriver.prototype.SetDialogText = function(value) {
-    var api = this.apibase + '/alert/text';
+    var api = '/alert/text';
     var body = {
         text: value,
         value: value.split('')
     };
-    this.request('POST', api, body);
-    return null;
+    this.request.Post(api, body);
 };
 
 WebDriver.prototype.AcceptDialog = function() {
-    var api = this.apibase + '/alert/accept';
+    var api = '/alert/accept';
     var body = {};
-    this.request('POST', api, body);
-    return;
+    this.request.Post(api, body);
 };
 
 WebDriver.prototype.DismissDialog = function() {
-    var api = this.apibase + '/alert/dismiss';
+    var api = '/alert/dismiss';
     var body = {};
-    this.request('POST', api, body);
-    return;
+    this.request.Post(api, body);
 };
 
 WebDriver.prototype.SaveScreenshot = function(path) {
-    var api = this.apibase + '/screenshot';
-    var r = this.request('GET', api);
+    var api = '/screenshot';
+    var r = this.request.Get(api);
     WebDriver._saveScreenshot(r.value, path);
 };
 
-WebDriver.prototype.ExecuteScript = function(js, args) {
-    var api = this.apibase + '/execute/sync';
+WebDriver.ExecuteScript = function(driverapibase, js, args) {
+    var url = driverapibase + '/execute/sync';
     args = args || [];
     var body = {
         "script": js,
         "args": args
     };
-    var r = this.request('POST', api, body);
+    var r = WebRequest.send('POST', url, body);
     if (r)
         return r.value;
+};
+
+WebDriver.prototype.ExecuteScript = function(js, args) {
+    return WebDriver.ExecuteScript(this.request.uribase, js, args)
 };
 
 WebDriver._saveScreenshot = function(base64, path) {
@@ -479,94 +503,100 @@ WebDriver._saveScreenshot = function(base64, path) {
     stream.Close()
 }
 
-/* Elementオブジェクト */
-var Element = function(driver, elementId, elementObject) {
-    this.driver = driver;
-    this.elementId = elementId;
+/* WebElementオブジェクト */
+var WebElement = function(driverapibase, elementId, elementObject) {
     this.object = elementObject;
-    this.apibase = '/session/' + this.driver.sessionId + '/element/' + this.elementId;
+    this.elementId = elementId;
+    this.driverapibase = driverapibase;
+    var elementapibase = driverapibase + '/element/' + elementId;
+    this.request = new WebRequest(elementapibase)
 };
 
-Element.prototype.raw = function() {
+WebElement.prototype.raw = function() {
     return this.object;
 };
 
-Element.prototype.Click = function() {
-    var api = this.apibase + '/click';
+WebElement.prototype.Click = function() {
+    var api = '/click';
     var body = {};
-    return this.driver.request('POST', api, body);
+    this.request.Post(api, body);
 };
 
-Element.prototype.Clear = function() {
-    var api = this.apibase + '/clear';
+WebElement.prototype.Clear = function() {
+    var api = '/clear';
     var body = {};
-    return this.driver.request('POST', api, body);
+    this.request.Post(api, body);
 };
 
-Element.prototype.SetValue = function(value) {
-    var api = this.apibase + '/value';
+WebElement.prototype.SetValue = function(value) {
+    var api = '/value';
     var body = {
         text: value,
         value: value.split('')
     };
-    return this.driver.request('POST', api, body);
+    this.request.Post(api, body);
 };
 
-Element.prototype.GetValue = function() {
-    return this.GetAttribute('value') || this.driver.ExecuteScript('return arguments[0].value;', [this.object]);
+WebElement.prototype.GetValue = function() {
+    return this.GetAttribute('value');
 };
 
-Element.prototype.GetText = function() {
-    var api = this.apibase + '/text';
-    var r = this.driver.request('GET', api);
+WebElement.prototype.GetText = function() {
+    var api = '/text';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
 };
 
-Element.prototype.GetAttribute = function(attribute) {
-    var api = this.apibase + '/attribute/' + attribute;
+WebElement.prototype.GetAttribute = function(attribute) {
+    var api = '/attribute/' + attribute;
     var body = {};
-    var r = this.driver.request('GET', api, body);
+    var r = this.request.Get(api, body);
     if (r.value)
         return r.value;
     var js = 'return arguments[0].getAttribute(arguments[1]);';
     var args = [this.raw(), attribute]
-    return this.driver.ExecuteScript(js, args);
+    return this.ExecuteScript(js, args);
 };
 
-Element.prototype.IsSelected = function() {
-    var api = this.apibase + '/selected';
-    var r = this.driver.request('GET', api);
+WebElement.prototype.IsSelected = function() {
+    var api = '/selected';
+    var r = this.request.Get(api);
     if (r)
         return r.value;
 };
 
-Element.prototype.FindElement = function(selector) {
-    var api = this.apibase + '/element';
+WebElement.prototype.FindElement = function(selector) {
+    var api = '/element';
     var body = {
         "using": "css selector",
         "value": selector
     };
-    var r = this.driver.request('POST', api, body);
+    var r = this.request.Post(api, body);
+    var eid, element;
     if (r.value.ELEMENT) {
-        return new Element(this.driver, r.value.ELEMENT, r.value);
+        eid = r.value.ELEMENT;
     } else {
         for (var key in r.value) {
             if (key.match(/element/)) {
-                return new Element(this.driver, r.value[key], r.value);
+                eid = r.value[key];
+                break;
             }
         }
     }
-    return null;
+    if (eid) {
+        element = new WebElement(this.driverapibase, eid, r.value);
+    }
+    return element;
 };
 
-Element.prototype.FindElements = function(selector) {
-    var api = this.apibase + '/elements';
+WebElement.prototype.FindElements = function(selector) {
+    var api = '/elements';
     var body = {
         "using": "css selector",
         "value": selector
     };
-    var r = this.driver.request('POST', api, body);
+    var r = this.request.Post(api, body);
     if (! r && r.status != 0)
         return null;
     var dictionary = new ActiveXObject("Scripting.Dictionary");
@@ -582,15 +612,20 @@ Element.prototype.FindElements = function(selector) {
                 }
             }
         }
-        dictionary.add(i, new Element(this.driver, eid, r.value[i]));
+        var element = new WebElement(this.driverapibase, eid, r.value[i]);
+        dictionary.add(i, element);
     }
     return dictionary.Items();
 };
 
-Element.prototype.SaveScreenshot = function(path) {
-    var api = this.apibase + '/screenshot'
-    var r = this.driver.request('GET', api);
+WebElement.prototype.SaveScreenshot = function(path) {
+    var api = '/screenshot'
+    var r = this.request.Get(api);
     WebDriver._saveScreenshot(r.value, path);
+};
+
+WebElement.prototype.ExecuteScript = function(js, args) {
+    return WebDriver.ExecuteScript(this.driverapibase, js, args)
 };
 
     endtextblock
