@@ -298,6 +298,71 @@ driver.ExecuteScript(js, args)
 - 戻り値  
     なし
 
+##### GetRect()
+
+ブラウザのサイズと座標を取得します
+
+- 戻り値  
+    Rectオブジェクト  
+    以下のフィールドを持ちます  
+    - width (幅)
+    - height (高さ)
+    - x (x座標)
+    - y (y座標)
+
+```
+rect = driver.GetRect()
+if (rect <> null) then
+    with rect
+        print "幅: " + .width
+        print "高さ: " + .height
+        print "x座標: " + .x
+        print "y座標: " + .y
+    endwith
+endif
+```
+
+##### SetRect(width, height, x, y)
+
+ブラウザのサイズと座標を変更します
+
+- width  
+    ブラウザの幅  
+    変更しない場合は`null`にする
+- height  
+    ブラウザの高さ  
+    変更しない場合は`null`にする
+- x  
+    ブラウザのx座標  
+    変更しない場合は`null`にする
+- y  
+    ブラウザのy座標  
+    変更しない場合は`null`にする
+- 戻り値  
+    Rectオブジェクト  
+
+##### Maximize()
+
+ブラウザを最大化します
+
+- 戻り値  
+    Rectオブジェクト  
+
+##### Minimize()
+
+ブラウザを最小化します
+
+- 戻り値  
+    Rectオブジェクト  
+
+##### Fullscreen()
+
+ブラウザをフルスクリーン表示します  
+※ フルスクリーンに対応しているブラウザのみ
+
+- 戻り値  
+    Rectオブジェクト  
+
 ##### Close()
 
 セッションを終了しブラウザを閉じます  
