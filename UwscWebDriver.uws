@@ -120,7 +120,10 @@ module WebDriver
     function ParseJson(json)
         result = CodeObject.JSON.parse(json)
     fend
-    
+
+    function StringifyJson(obj)
+        result = CodeObject.JSON.stringify(obj)
+    fend
 
     function GetLog()
         result = CodeObject.WebDriver.GetLog()
@@ -502,6 +505,50 @@ WebDriver._saveScreenshot = function(base64, path) {
     stream.SaveToFile(path, 2) // adSaveCreateOverWrite
     stream.Close()
 }
+
+WebDriver.prototype.GetRect = function() {
+    var api = '/window/rect';
+    var r = this.request.Get(api);
+    if (r.value.x !== null)
+        return r.value;
+};
+
+WebDriver.prototype.SetRect = function(width, height, x, y) {
+    var api = '/window/rect';
+    var body = {
+        "width": width,
+        "height": height,
+        "x": x,
+        "y": y
+    }
+    var r = this.request.Post(api, body);
+    if (r.value.x !== null)
+        return r.value;
+};
+
+WebDriver.prototype.Maximize = function() {
+    var api = '/window/maximize';
+    var body = {}
+    var r = this.request.Post(api, body);
+    if (r.value.x !== null)
+        return r.value;
+};
+
+WebDriver.prototype.Minimize = function() {
+    var api = '/window/minimize';
+    var body = {}
+    var r = this.request.Post(api, body);
+    if (r.value.x !== null)
+        return r.value;
+};
+
+WebDriver.prototype.Fullscreen = function() {
+    var api = '/window/fullscreen';
+    var body = {}
+    var r = this.request.Post(api, body);
+    if (r.value.x !== null)
+        return r.value;
+};
 
 /* WebElementオブジェクト */
 var WebElement = function(driverapibase, elementId, elementObject) {
