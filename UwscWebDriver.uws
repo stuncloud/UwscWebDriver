@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.3.2"
+    const MODULE_VERSION = "0.3.3"
 
     dim debug = FALSE
     const Chrome  = "chromedriver.exe"
