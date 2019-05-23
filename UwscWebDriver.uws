@@ -710,9 +710,17 @@ module Process
     fend
     
     function FindListeningPort(port)
-        service = locator.ConnectServer(".", "Root\StandardCimv2")
-        q = service.ExecQuery("select LocalPort from MSFT_NetTCPConnection where LocalPort = " + port + " and state = 2")
-        result = q.Count
+        if kindofos() > 24 then
+            service = locator.ConnectServer(".", "Root\StandardCimv2")
+            q = service.ExecQuery("select LocalPort from MSFT_NetTCPConnection where LocalPort = " + port + " and state = 2")
+            result = q.Count
+        else
+            if betweenstr(doscmd("netstat -anp tcp"), ":" + port, "LISTENING") <> "" then
+               result = 1
+            else
+               result = 0
+            endif
+        endif
     fend
     
 
