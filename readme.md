@@ -78,7 +78,7 @@ Install-Package -Provider ChocolateyGet -Name selenium-gecko-driver
 
 ### 準備
 
-- 使用するWebDriverを実行するスクリプトと同じフォルダに置く
+- 使用するWebDriverを実行するスクリプトと同じフォルダに置く  
     ※ PATHの通してあるフォルダにWebDriverが置いてある場合は不要
 - `UwscWebDriver.uws` を実行するスクリプトと同じフォルダに置く
 - 実行するスクリプトで `UwscWebDriver.uws` を `call` する
