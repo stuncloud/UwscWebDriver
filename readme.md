@@ -73,13 +73,6 @@ Install-Package -Provider ChocolateyGet -Name chromedriver
 Install-Package -Provider ChocolateyGet -Name selenium-gecko-driver
 ```
 
-
-jsonパーサ
-----------
-
-json処理のために `json2.js` を使います  
-[ここ](https://github.com/douglascrockford/JSON-js)からダウンロードして実行するスクリプトと同じフォルダに置いてください
-
 使い方
 ------
 
