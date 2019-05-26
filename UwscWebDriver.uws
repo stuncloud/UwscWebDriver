@@ -1,8 +1,9 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.3.4"
+    const MODULE_VERSION = "0.3.5"
 
     dim debug = FALSE
+    dim showcmd = TRUE
     const Chrome  = "chromedriver.exe"
     const Firefox = "geckodriver.exe"
     const Edge    = "MicrosoftWebDriver.exe"
@@ -40,6 +41,9 @@ module WebDriver
         result = MODULE_VERSION
     fend
     
+    procedure HideCmd()
+        showcmd = FALSE
+    fend
     
     function Start(driverpath, port = 9515, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
@@ -77,7 +81,7 @@ module WebDriver
         
         cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + verbose
         if ! Process.Find(cmd) then
-            doscmd(cmd, TRUE, TRUE)
+            doscmd(cmd, TRUE, showcmd)
             if ! Process.Wait(port) then
                 result = null
                 msgbox("WebDriverが起動していません")

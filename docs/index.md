@@ -11,10 +11,17 @@
 - 戻り値  
     モジュールのバージョン
 
+##### WebDriver.HideCmd()
+
+`WebDriver.Start()` 実行時にコマンドプロンプトの画面表示されなくなります  
+(`WebDriver.Start()` の前に呼ぶ必要があります)  
+スクリプト終了後もコマンドプロンプトは非表示のまま残ります  
+不要な場合はタスクマネージャ等で終了させてください
+
 ##### WebDriver.Start(driverpath[, port[, capabilities]])
 
-WebDriverを起動して、セッションIDを取得します  
-(コマンドプロンプトの画面が表示されます)
+WebDriverとブラウザを起動してwebdriverオブジェクトを取得します  
+事前に `WebDriver.HideCmd()` を実行していない場合、コマンドプロンプトの画面が表示されます
 
 - driverpath  
     Chromeなら `WebDriver.Chrome`  
