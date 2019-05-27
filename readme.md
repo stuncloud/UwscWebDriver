@@ -23,6 +23,9 @@ WebDriver導入方法
 
 ### Chrome
 
+> Google Chrome と chromedriver のバージョンは必ず合わせてください  
+> 特にメジャーバージョンがずれると予期せぬ不具合が生じる可能性があります
+
 1. [ここ](https://sites.google.com/a/chromium.org/chromedriver/downloads)から `Latest Release` のリンクを開いて `chromedriver_win32.zip` をダウンロード
 2. zipの中の `chromedriver.exe` を実行するスクリプトと同じフォルダに置く
 
