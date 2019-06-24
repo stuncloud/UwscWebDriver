@@ -100,8 +100,7 @@ module WebDriver
     
     function Connect(session)
         try
-            s = split(session, "|", TRUE)
-            result = CodeObject.WebDriver.Connect(s[0], s[1], debug)
+            result = CodeObject.WebDriver.Connect(session, debug)
         except
             result = NULL
         endtry
@@ -202,15 +201,21 @@ WebRequest.prototype.Delete = function(api) {
 }
 
 /* WebDriverオブジェクト */
-var WebDriver = function(sessionId, uribase) {
+var WebDriver = function(sessionId, uribase, capabilities) {
     this.uribase = uribase;
     this.sessionId = sessionId;
+    this.capabilities = capabilities;
     var apibase = uribase + '/session/' + this.sessionId;
     this.request = new WebRequest(apibase);
 };
 
 WebDriver.prototype.GetSession = function() {
-    return this.sessionId + '|' + this.uribase;
+    return [
+        this.sessionId,
+        this.uribase,
+        this.GetBrowserName(),
+        this.GetBrowserVersion()
+    ].join('|');
 };
 
 WebDriver.Start = function(uribase, capabilities, debug) {
@@ -222,16 +227,20 @@ WebDriver.Start = function(uribase, capabilities, debug) {
     r = WebRequest.send('POST', uri, body);
     if (r) {
         var sessionId = r.sessionId ? r.sessionId: r.value.sessionId;
-        var d = new WebDriver(sessionId, uribase);
+        var d = new WebDriver(sessionId, uribase, (r.value.capabilities || r.value));
         d.SetImplicitWait(10000);
         return d;
     }
     return null;
 };
 
-WebDriver.Connect = function(sessionId, uribase, debug) {
+WebDriver.Connect = function(sessionString, debug) {
     WebRequest.debug = debug;
-    var d = new WebDriver(sessionId, uribase);
+    var s = sessionString.split('|');
+    var d = new WebDriver(s[0], s[1], {
+        browserName: s[2],
+        browserVersion: s[3]
+    });
     // apiが通れば再接続成功
     var r = d.request.Get('/url');
     if (! r)
@@ -273,6 +282,14 @@ WebDriver.ConvertToSaveArray = function(arr) {
     }
     return dictionary.Items();
 }
+
+WebDriver.prototype.GetBrowserName = function() {
+    return this.capabilities.browserName;
+};
+
+WebDriver.prototype.GetBrowserVersion = function() {
+    return this.capabilities.browserVersion || this.capabilities.version;
+};
 
 WebDriver.prototype.SetImplicitWait = function(millisec) {
     var api = '/timeouts';
