@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.3.5"
+    const MODULE_VERSION = "0.3.6"
 
     dim debug = FALSE
     dim showcmd = TRUE
