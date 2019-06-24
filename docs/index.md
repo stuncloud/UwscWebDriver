@@ -98,6 +98,55 @@ arr.push("piyo")
 - 戻り値  
     エラー詳細(文字列)
 
+### WebDriverDownloadモジュール
+
+#### 関数
+
+##### WebDriverDownload.Edge()
+
+Edge用のWebdriverを有効化します
+
+- 戻り値
+    - 成功時  
+        MicrosoftWebDriverのバージョン
+    - 失敗時  
+        EMPTY
+
+##### WebDriverDownload.Chrome(major)
+
+chromedriverをダウンロードします
+
+- major
+    操作するGoogle Chromeのメジャーバージョン
+    例: 75.0.3770.100 であれば 75
+- 戻り値
+    - 成功時  
+        chromedriverのバージョン
+    - 失敗時  
+        EMPTY
+
+##### WebDriverDownload.Firefox(bit)
+
+geckodriverをダウンロードします
+
+- bit
+    `32`または`64`を指定
+    操作するFirefoxに合わせる
+- 戻り値
+    - 成功時  
+        geckodriverのバージョン
+    - 失敗時  
+        EMPTY
+
+##### WebDriverDownload.Dialog()
+
+GUIに従いwebdriverのダウンロード・有効化を行います
+
+- 戻り値
+    - 成功時  
+        有効化またはダウンロードしたwebdriverのバージョン
+    - 失敗時  
+        EMPTY
 
 ### webdriverオブジェクト
 

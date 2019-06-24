@@ -44,7 +44,7 @@ module WebDriver
     procedure HideCmd()
         showcmd = FALSE
     fend
-    
+
     function Start(driverpath, port = 9515, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
@@ -704,6 +704,124 @@ WebElement.prototype.ExecuteScript = function(js, args) {
         endwith
     fend
 
+endmodule
+
+module WebDriverDownload
+    function Dialog()
+        result = EMPTY
+        select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択", "Edge", "Chrome", "Firefox")
+            case "Edge"
+                result = Edge()
+            case "Chrome"
+                ver = input("Google Chromeのメジャーバージョンを入力<#CR>例: 75")
+                if length(ver)
+                    result = Chrome(ver)
+                endif
+            case "Firefox"
+                bit = slctbox(SLCT_BTN or SLCT_STR, 0, "Firefox<#CR>選択してください", "32bit", "64bit")
+                if bit <> -1 then
+                    result = Firefox(replace(bit, "bit", ""))
+                endif
+            default
+        selend
+    fend
+    
+    function Edge()
+        with createoleobj("Shell.Application")
+            exe = "DISM.exe"
+            args = "/Online /Add-Capability /CapabilityName:Microsoft.WebDriver~~~~0.0.1.0"
+            .ShellExecute(exe, args, EMPTY, "runas", 1)
+        endwith
+        ret = doscmd("MicrosoftWebDriver --version")
+        result = ParseDriverVersion(ret)
+    fend
+    
+    function Chrome(major)
+        latest_uri = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_" + major
+        r = Request(latest_uri)
+        v = trim(r.responseText)
+        file_uri = "https://chromedriver.storage.googleapis.com/" + v + "/chromedriver_win32.zip"
+        r = Request(file_uri)
+        if ! Save(r, "chromedriver_win32.zip") then
+            result = EMPTY
+            exit
+        endif
+        if ! UnZip(GET_CUR_DIR + "\chromedriver_win32.zip", "chromedriver.exe") then
+            result = EMPTY
+            exit
+        endif
+        ret = doscmd("chromedriver --version")
+        result = ParseDriverVersion(ret)
+    fend
+    
+    function Firefox(bit)
+        select bit
+            case 32,64,"32","64"
+            default
+                result = EMPTY
+                exit
+        selend
+        tags_uri = "https://api.github.com/repos/mozilla/geckodriver/tags"
+        s = Request(tags_uri)
+        latest = betweenstr(s.responseText, "<#DBL>name<#DBL>:<#DBL>", "<#DBL>,", 1)
+        file_uri = "https://github.com/mozilla/geckodriver/releases/download/" + latest + "/geckodriver-" + latest + "-win" + bit + ".zip"
+        r = Request(file_uri, TRUE)
+        if ! Save(r, "geckodriver-" + latest + "-win" + bit + ".zip") then
+            result = EMPTY
+            exit
+        endif
+        if ! UnZip(GET_CUR_DIR + "\geckodriver-" + latest + "-win" + bit + ".zip", "geckodriver.exe") then
+            result = EMPTY
+            exit
+        endif
+        ret = doscmd("geckodriver --version")
+        result = ParseDriverVersion(ret)
+    fend
+    
+    function ParseDriverVersion(str)
+        with createoleobj("VBScript.RegExp")
+            .pattern = "\d+\.\d+\.\d+(\.\d+)?"
+            m = .Execute(str)
+            if m.count then
+                result =  m.item(0).value
+            else
+                result = EMPTY
+            endif
+        endwith
+    fend
+    
+    function Request(uri, useServerXMLHTTP = FALSE)
+        if useServerXMLHTTP then
+            result = createoleobj("Msxml2.ServerXMLHTTP")
+        else
+            result = createoleobj("Msxml2.XMLHTTP")
+        endif
+        with result
+            .open("GET", uri, FALSE)
+            .send()
+        endwith
+    fend
+    
+    function Save(response, path)
+        with createoleobj("ADODB.Stream")
+            .Open()
+            // .Mode = 2 // adModeWrite
+            .Type = 1 // adTypeBinary
+            .Write(response.responseBody)
+            .SaveToFile(path, 2) //adSaveCreateOverWrite
+            .Close()
+        endwith
+        result = fopen(path, F_EXISTS)
+    fend
+    
+    function UnZip(path, name)
+        with createoleobj("Shell.Application")
+            zip = .Namespace(path)
+            zip.ParentFolder.CopyHere(zip.Items())
+        endwith
+        result = fopen(name, F_EXISTS)
+    fend
+    
 endmodule
 
 module Process
