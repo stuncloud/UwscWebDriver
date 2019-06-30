@@ -13,7 +13,42 @@ WebDriverについて
 WebDriver導入方法
 -------------
 
-### Edge
+### ダウンロード用スクリプトを実行する
+
+`UwscWebDriver.uws`に含まれるWebDriverDownloadモジュールによって各種WebDriverの導入および更新が可能です
+
+#### GUIから導入するWebDriverを選ぶ
+
+Edge、Chrome、Firefoxに対応
+
+```
+call UwscWebDriver.uws
+
+WebDriverDownload.Dialog()
+```
+
+#### 個別に導入する
+
+```
+call UwscWebDriver.uws
+
+// MicrosoftWebDriverを有効にする
+// UACの昇格ダイアログが表示されます
+WebDriverDownload.Edge()
+
+// chromedriverをダウンロードする
+// Google Chromeのメジャーバージョンが75の場合、引数に75を渡す
+WebDriverDownload.Chrome(75)
+
+// 最新のgeckodriverをダウンロードする
+// 引数に32を渡すと32bit版、64を渡すと64bit版がダウンロードされます
+WebDriverDownload.Firefox(64)
+
+```
+
+### 手動で導入する
+
+#### Edge
 
 1. 管理者として実行したコマンドプロンプト、またはPowerShellから以下を実行する
 
@@ -21,7 +56,7 @@ WebDriver導入方法
     DISM.exe /Online /Add-Capability /CapabilityName:Microsoft.WebDriver~~~~0.0.1.0
     ```
 
-### Chrome
+#### Chrome
 
 > Google Chrome と chromedriver のバージョンは必ず合わせてください  
 > 特にメジャーバージョンがずれると予期せぬ不具合が生じる可能性があります
@@ -29,14 +64,14 @@ WebDriver導入方法
 1. [ここ](https://sites.google.com/a/chromium.org/chromedriver/downloads)から `Latest Release` のリンクを開いて `chromedriver_win32.zip` をダウンロード
 2. zipの中の `chromedriver.exe` を実行するスクリプトと同じフォルダに置く
 
-### Firefox
+#### Firefox
 
 1. [ここ](https://github.com/mozilla/geckodriver/releases)から `geckodriver-vX.XX.X-winXX.zip` をダウンロード
 2. zipの中の `geckodriver.exe` を実行するスクリプトと同じフォルダに置く
 
-※ 32か64は環境に合わせてください
+※ 32か64かは環境に合わせてください
 
-### その他のWebDriver
+#### その他のWebDriver
 
 WebDriverのexeを実行するスクリプトと同じフォルダに置いてください
 
