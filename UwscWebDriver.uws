@@ -275,7 +275,7 @@ WebDriver.Contains = function(arr, value) {
     return false;
 }
 
-WebDriver.ConvertToSaveArray = function(arr) {
+WebDriver.ConvertToSafeArray = function(arr) {
     var dictionary = new ActiveXObject("Scripting.Dictionary");
     for (var i = 0; i < arr.length; i++) {
         dictionary.add(i, arr[i]);
@@ -364,7 +364,7 @@ WebDriver.prototype._getWindowHandles = function() {
 
 WebDriver.prototype.GetWindowHandles = function() {
     var handles = this._getWindowHandles();
-    return WebDriver.ConvertToSaveArray(handles);
+    return WebDriver.ConvertToSafeArray(handles);
 };
 
 WebDriver.prototype.GetUrl = function() {
