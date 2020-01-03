@@ -388,12 +388,8 @@ WebDriver.prototype.GetSource = function() {
         return r.value;
 };
 
-WebDriver.prototype.FindElement = function(selector) {
+WebDriver.prototype.find_single_elem = function(body) {
     var api = '/element';
-    var body = {
-        "using": "css selector",
-        "value": selector
-    };
     var r = this.request.Post(api, body);
     var element, eid;
     if (r.value.ELEMENT) {
@@ -412,12 +408,8 @@ WebDriver.prototype.FindElement = function(selector) {
     return element;
 };
 
-WebDriver.prototype.FindElements = function(selector) {
+WebDriver.prototype.find_multi_elem = function(body) {
     var api = '/elements';
-    var body = {
-        "using": "css selector",
-        "value": selector
-    };
     var r = this.request.Post(api, body);
     if (! r && r.status != 0)
         return null;
@@ -440,8 +432,40 @@ WebDriver.prototype.FindElements = function(selector) {
     return dictionary.Items();
 };
 
+WebDriver.prototype.FindElement = function(selector) {
+    var body = {
+        "using": "css selector",
+        "value": selector
+    };
+    return this.find_single_elem(body);
+};
+
+WebDriver.prototype.FindElements = function(selector) {
+    var body = {
+        "using": "css selector",
+        "value": selector
+    };
+    return this.find_multi_elem(body);
+};
+
 WebDriver.prototype.FindElementsByName = function(name) {
     return this.FindElements('*[name="' + name + '"]');
+};
+
+WebDriver.prototype.FindElementByXPath = function(xpath) {
+    var body = {
+        "using": "xpath",
+        "value": xpath
+    };
+    return this.find_single_elem(body);
+};
+
+WebDriver.prototype.FindElementsByXPath = function(xpath) {
+    var body = {
+        "using": "xpath",
+        "value": xpath
+    };
+    return this.find_multi_elem(body);
 };
 
 WebDriver.prototype.Close = function() {
