@@ -304,6 +304,30 @@ name属性の値を指定して該当する複数のエレメントの `webeleme
     - 失敗時  
         null
 
+##### FindElementByXPath(xpath)
+
+xpathを指定して該当するエレメントの `webelementオブジェクト` を取得します
+
+- xpath  
+    対象エレメントのxpath
+- 戻り値  
+    - 成功時  
+        webelementオブジェクト
+    - 失敗時  
+        null
+
+##### FindElementsByXPath(xpath)
+
+xpathを指定して該当する複数のエレメントの `webelementオブジェクト` を取得します
+
+- xpath  
+    対象エレメントのxpath
+- 戻り値  
+    - 成功時  
+        webelementオブジェクト配列 (SafeArray)
+    - 失敗時  
+        null
+
 ##### ExecuteScript(script[, args])
 
 任意のJavaScriptを実行させます
