@@ -391,7 +391,7 @@ WebDriver.prototype.GetSource = function() {
 WebDriver.prototype.find_single_elem = function(body) {
     var api = '/element';
     var r = this.request.Post(api, body);
-    var element, eid;
+    var eid;
     if (r.value.ELEMENT) {
         eid = r.value.ELEMENT;
     } else {
@@ -403,9 +403,9 @@ WebDriver.prototype.find_single_elem = function(body) {
         }
     }
     if (eid) {
-        element = new WebElement(this.request.uribase, eid, r.value);
+        return new WebElement(this.request.uribase, eid, r.value);
     }
-    return element;
+    return null;
 };
 
 WebDriver.prototype.find_multi_elem = function(body) {
