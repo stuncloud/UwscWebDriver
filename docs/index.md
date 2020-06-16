@@ -25,7 +25,8 @@ WebDriverとブラウザを起動してwebdriverオブジェクトを取得し�
 
 - driverpath  
     Chromeなら `WebDriver.Chrome`  
-    MS Edgeなら `WebDriver.Edge`  
+    新MS Edgeなら `WebDriver.Edge` または `WebDriver.ChromiumEdge`  
+    旧MS Edgeなら `WebDriver.EdgeLegacy`  
     Firefoxなら `WebDriver.Firefox`  
     を指定します  
     それ以外のWebDriverの場合はexeのフルパスを指定してください
@@ -38,6 +39,27 @@ WebDriverとブラウザを起動してwebdriverオブジェクトを取得し�
         webdriverオブジェクト
     - 失敗時  
         null
+
+##### WebDriver.Chrome([port[, capabilities]])
+##### WebDriver.ChromiumEdge([port[, capabilities]])
+##### WebDriver.EdgeLegacy([port[, capabilities]])
+##### WebDriver.Firefox([port[, capabilities]])
+
+`WebDriver.Start()` のブラウザ別ラッパー関数です  
+WebDriverとブラウザを起動し、webdriverオブジェクトを取得します  
+事前に `WebDriver.HideCmd()` を実行していない場合、コマンドプロンプトの画面が表示されます  
+WebDriverは実行スクリプトと同じディレクトリ、または `%PATH%` に配置する必要があります  
+
+- port  
+    省略可能  
+    WebDriverの待受ポート番号を指定します  
+    デフォルトは `9515` です
+- 戻り値
+    - 成功時  
+        webdriverオブジェクト
+    - 失敗時  
+        null
+
 
 ##### WebDriver.Remote(remotehost, port, capabilities)
 
@@ -102,9 +124,19 @@ arr.push("piyo")
 
 #### 関数
 
-##### WebDriverDownload.Edge()
+##### WebDriverDownload.ChromiumEdge()
 
-Edge用のWebdriverを有効化します
+新MS Edge(Chromium Edge)用のWebdriverをダウンロードします
+
+- 戻り値
+    - 成功時  
+        msedgedriverのバージョン
+    - 失敗時  
+        EMPTY
+
+##### WebDriverDownload.EdgeLegacy()
+
+旧MS Edge用のWebdriverを有効化します
 
 - 戻り値
     - 成功時  

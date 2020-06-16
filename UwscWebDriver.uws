@@ -4,9 +4,11 @@ module WebDriver
 
     dim debug = FALSE
     dim showcmd = TRUE
-    const Chrome  = "chromedriver.exe"
-    const Firefox = "geckodriver.exe"
-    const Edge    = "MicrosoftWebDriver.exe"
+    const Chrome       = "chromedriver.exe"
+    const Firefox      = "geckodriver.exe"
+    const Edge         = "msedgedriver.exe"
+    const ChromiumEdge = "msedgedriver.exe"
+    const EdgeLegacy   = "MicrosoftWebDriver.exe"
 
     dim ScriptControl,CodeObject
     procedure WebDriver
@@ -45,6 +47,27 @@ module WebDriver
         showcmd = FALSE
     fend
 
+    function Chrome(port = 9515, capabilities = ChromeCapabilities)
+        result = Start(Chrome, port, capabilities)
+    fend
+    
+    function ChromiumEdge(port = 9515, capabilities = ChromeCapabilities)
+        result = Start(ChromiumEdge, port, capabilities)
+    fend
+    
+    function Edge(port = 9515, capabilities = ChromeCapabilities)
+        result = Start(ChromiumEdge, port, capabilities)
+    fend
+    
+    function EdgeLegacy(port = 9515, capabilities = EdgeCapabilities)
+        result = Start(EdgeLegacy, port, capabilities)
+    fend
+    
+    function Firefox(port = 9515, capabilities = ChromeCapabilities)
+        result = Start(Firefox, port, capabilities)
+    fend
+    
+
     function Start(driverpath, port = 9515, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
@@ -62,7 +85,12 @@ module WebDriver
                     capabilities = ChromeCapabilities
                 endif
                 if this.debug then verbose = " --verbose"
-            case pos(Edge, driverpath) > 0
+            case pos(ChromiumEdge, driverpath) > 0
+                if capabilities = EMPTY then
+                    capabilities = ChromeCapabilities
+                endif
+                if this.debug then verbose = " --verbose"
+            case pos(EdgeLegacy, driverpath) > 0
                 if capabilities = EMPTY then
                     capabilities = EdgeCapabilities
                 endif
@@ -733,12 +761,15 @@ endmodule
 module WebDriverDownload
     function Dialog()
         result = EMPTY
-        select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択", "Edge", "Chrome", "Firefox")
-            case "Edge"
-                result = Edge()
+        select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択", "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy")
+            case "ChromiumEdge"
+                ver = input("Chromium Edgeのメジャーバージョンを入力<#CR>例: 83")
+                if length(val(ver, EMPTY))
+                    result = ChromiumEdge(ver)
+                endif
             case "Chrome"
                 ver = input("Google Chromeのメジャーバージョンを入力<#CR>例: 75")
-                if length(ver)
+                if length(val(ver, EMPTY))
                     result = Chrome(ver)
                 endif
             case "Firefox"
@@ -746,11 +777,53 @@ module WebDriverDownload
                 if bit <> -1 then
                     result = Firefox(replace(bit, "bit", ""))
                 endif
+            case "EdgeLegacy"
+                result = EdgeLegacy()
             default
         selend
     fend
+
+    function ChromiumEdge(ver)
+        result = EMPTY
+        arc = "32"
+        if kindofos(TRUE) then
+            arc = "64"
+        endif
+
+        dl_page_url = "https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/"
+        r = Request(dl_page_url)
+
+        u1 = "https://msedgedriver.azureedge.net/" + ver
+        u2 = "/edgedriver_win" + arc + ".zip"
+        v = betweenstr(r.responseText, u1, u2, 1)
+
+        if length(v) = 0 then
+            msgbox("指定バージョン("+ ver +")が見つかりませんでした")
+            exit
+        endif
+
+        v2 = betweenstr(v, u1, "", 1)
+        if length(v2) then
+            v = v2
+        endif
+
+        file_url = u1 + v + u2
+        r = Request(file_url)
+        if ! Save(r, "msedgedriver.zip") then
+            msgbox("ダウンロードに失敗しました")
+            exit
+        endif
+
+        if ! UnZip(GET_CUR_DIR + "\msedgedriver.zip", "msedgedriver.exe") then
+            msgbox("zipファイルの展開に失敗しました")
+            exit
+        endif
+
+        ret = doscmd("msedgedriver --version")
+        result = ParseDriverVersion(ret)
+    fend
     
-    function Edge()
+    function EdgeLegacy()
         with createoleobj("Shell.Application")
             exe = "DISM.exe"
             args = "/Online /Add-Capability /CapabilityName:Microsoft.WebDriver~~~~0.0.1.0"
@@ -841,7 +914,12 @@ module WebDriverDownload
     function UnZip(path, name)
         with createoleobj("Shell.Application")
             zip = .Namespace(path)
-            zip.ParentFolder.CopyHere(zip.Items())
+            for file in zip.Items()
+                if file.Name = name then
+                    zip.ParentFolder.CopyHere(file)
+                    break
+                endif
+            next
         endwith
         result = fopen(name, F_EXISTS)
     fend
