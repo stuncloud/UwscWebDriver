@@ -34,7 +34,7 @@ call UwscWebDriver.uws
 
 // MicrosoftWebDriverを有効にする
 // UACの昇格ダイアログが表示されます
-WebDriverDownload.Edge()
+WebDriverDownload.EdgeLegacy()
 
 // msedgedriverをダウンロードする
 // Chromium Edgeのメジャーバージョンが83の場合、引数に83を渡す
