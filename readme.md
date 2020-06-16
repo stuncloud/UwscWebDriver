@@ -19,7 +19,7 @@ WebDriver導入方法
 
 #### GUIから導入するWebDriverを選ぶ
 
-Edge、Chrome、Firefoxに対応
+Edge(新旧)、Chrome、Firefoxに対応
 
 ```
 call UwscWebDriver.uws
@@ -35,6 +35,10 @@ call UwscWebDriver.uws
 // MicrosoftWebDriverを有効にする
 // UACの昇格ダイアログが表示されます
 WebDriverDownload.Edge()
+
+// msedgedriverをダウンロードする
+// Chromium Edgeのメジャーバージョンが83の場合、引数に83を渡す
+WebDriverDownload.ChromiumEdge(83)
 
 // chromedriverをダウンロードする
 // Google Chromeのメジャーバージョンが75の場合、引数に75を渡す
@@ -71,6 +75,15 @@ WebDriverDownload.Firefox(64)
 
 ※ 32か64かは環境に合わせてください
 
+#### Chromium Edge
+
+> Chromium Edge と msedgedriver のメジャーバージョンは必ず合わせてください  
+> バージョンが異なると動作しません
+
+1. [ここ](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/#downloads)からMicrosoft Edgeの任意のバージョンのリンク(x86かx64)をクリックし、`edgedriver_winXX.zip` をダウンロード  
+    ※ Legacyは旧版なのでダウンロードしないでください  
+2. zipの中の `msedgedriver.exe` を実行するスクリプトと同じフォルダに置く
+
 #### その他のWebDriver
 
 WebDriverのexeを実行するスクリプトと同じフォルダに置いてください
@@ -83,13 +96,13 @@ Windows10では標準で使えます
 
 以下はすべて「管理者として実行」したPowerShellで実行してください
 
-#### ChocolateyGetの導入方法
+#### Chocolatierの導入方法
 
-ChocolateyGetがインストールされていない場合は以下を実行します
+Chocolatierがインストールされていない場合は以下を実行します
 
 ```PowerShell
-Install-PackageProvider -Name ChocolateyGet
-Import-PackageProvider -Name ChocolateyGet
+Install-PackageProvider -Name Chocolatier
+Import-PackageProvider -Name Chocolatier
 ```
 
 #### WebDriverのインストール
@@ -102,13 +115,19 @@ PATHの通ったディレクトリに置かれるはずなのでこの方法で�
 ##### Chrome
 
 ```PowerShell
-Install-Package -Provider ChocolateyGet -Name chromedriver
+Install-Package -Provider Chocolatier -Name chromedriver
 ```
 
 ##### Firefox
 
 ```PowerShell
 Install-Package -Provider ChocolateyGet -Name selenium-gecko-driver
+```
+
+##### Chromium Edge
+
+```PowerShell
+Install-Package -Provider ChocolateyGet -Name selenium-chromium-edge-driver
 ```
 
 使い方
