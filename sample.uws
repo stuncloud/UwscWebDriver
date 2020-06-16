@@ -1,6 +1,31 @@
 call UwscWebDriver.uws
 
-driver = WebDriver.Start(WebDriver.Edge)
+select slctbox(SLCT_BTN, 0, "操作を選択", "ブラウザ操作を試す", "WebDriverダウンロード")
+    case SLCT_1
+    case SLCT_2
+        v = WebDriverDownload.Dialog()
+        if length(v) then
+            msgbox("WebDriverバージョン: " + v)
+        endif
+        exit
+    default
+        exit
+selend
+
+select slctbox(SLCT_BTN or SLCT_STR, 0, "ブラウザを選択", "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy")
+    case "Chrome"
+        driver = WebDriver.Chrome()
+    case "Firefox"
+        driver = WebDriver.Firefox()
+    case "ChromiumEdge"
+        driver = WebDriver.ChromiumEdge()
+    case "EdgeLegacy"
+        driver = WebDriver.EdgeLegacy()
+    default
+        exit
+selend
+
+
 driver.Navigate("http://example.selenium.jp/reserveApp/")
 
 // 予約フォーム画面
