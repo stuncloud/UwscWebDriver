@@ -774,31 +774,45 @@ WebElement.prototype.ExecuteScript = function(js, args) {
 endmodule
 
 module WebDriverDownload
-    function Dialog()
+    function Dialog(dir = GET_CUR_DIR)
         result = EMPTY
-        select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択", "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy")
-            case "ChromiumEdge"
-                ver = input("Chromium Edgeのメジャーバージョンを入力<#CR>例: 83")
-                if length(val(ver, EMPTY))
-                    result = ChromiumEdge(ver)
-                endif
-            case "Chrome"
-                ver = input("Google Chromeのメジャーバージョンを入力<#CR>例: 75")
-                if length(val(ver, EMPTY))
-                    result = Chrome(ver)
-                endif
-            case "Firefox"
-                bit = slctbox(SLCT_BTN or SLCT_STR, 0, "Firefox<#CR>選択してください", "32bit", "64bit")
-                if bit <> -1 then
-                    result = Firefox(replace(bit, "bit", ""))
-                endif
-            case "EdgeLegacy"
-                result = EdgeLegacy()
-            default
-        selend
+        repeat
+            select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択<#CR>保存先：" + dir, "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy", "保存先の変更")
+                case "ChromiumEdge"
+                    ver = input("Chromium Edgeのメジャーバージョンを入力<#CR>例: 83")
+                    if length(val(ver, EMPTY))
+                        result = ChromiumEdge(ver, dir)
+                    endif
+                case "Chrome"
+                    ver = input("Google Chromeのメジャーバージョンを入力<#CR>例: 75")
+                    if length(val(ver, EMPTY))
+                        result = Chrome(ver, dir)
+                    endif
+                case "Firefox"
+                    bit = slctbox(SLCT_BTN or SLCT_STR, 0, "Firefox<#CR>選択してください", "32bit", "64bit")
+                    if bit <> -1 then
+                        result = Firefox(replace(bit, "bit", ""), dir)
+                    endif
+                case "EdgeLegacy"
+                    result = EdgeLegacy()
+                case "保存先の変更"
+                    curdir = GET_CUR_DIR
+                    with createoleobj("Shell.Application")
+                        folder = .BrowseForFolder(0, "WebDriverの保存先を選択", $50, "")
+                        if folder <> NOTHING then
+                            dir = folder.self.path
+                        endif
+                        def_dll SetCurrentDirectoryA(string):bool:kernel32
+                        SetCurrentDirectoryA(curdir)
+                    endwith
+                default
+                    exit
+            selend
+        until result <> EMPTY
     fend
 
-    function ChromiumEdge(ver)
+    function ChromiumEdge(ver, dir = GET_CUR_DIR)
+        drivername = "msedgedriver.exe"
         result = EMPTY
         arc = "32"
         if kindofos(TRUE) then
@@ -824,17 +838,18 @@ module WebDriverDownload
 
         file_url = u1 + v + u2
         r = Request(file_url)
-        if ! Save(r, "msedgedriver.zip") then
+        if ! Save(r, dir, "msedgedriver.zip") then
             msgbox("ダウンロードに失敗しました")
             exit
         endif
 
-        if ! UnZip(GET_CUR_DIR + "\msedgedriver.zip", "msedgedriver.exe") then
+        if ! UnZip(dir, "msedgedriver.zip", drivername) then
             msgbox("zipファイルの展開に失敗しました")
             exit
         endif
 
-        ret = doscmd("msedgedriver --version")
+        path = JoinPath(dir, drivername)
+        ret = doscmd("<#DBL>" + path + "<#DBL> --version")
         result = ParseDriverVersion(ret)
     fend
     
@@ -848,25 +863,31 @@ module WebDriverDownload
         result = ParseDriverVersion(ret)
     fend
     
-    function Chrome(major)
+    function Chrome(major, dir = GET_CUR_DIR)
+        drivername = "chromedriver.exe"
+
         latest_uri = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_" + major
         r = Request(latest_uri)
         v = trim(r.responseText)
         file_uri = "https://chromedriver.storage.googleapis.com/" + v + "/chromedriver_win32.zip"
         r = Request(file_uri)
-        if ! Save(r, "chromedriver_win32.zip") then
+        if ! Save(r, dir, "chromedriver_win32.zip") then
             result = EMPTY
             exit
         endif
-        if ! UnZip(GET_CUR_DIR + "\chromedriver_win32.zip", "chromedriver.exe") then
+        if ! UnZip(dir, "chromedriver_win32.zip", drivername) then
             result = EMPTY
             exit
         endif
-        ret = doscmd("chromedriver --version")
+
+        path = JoinPath(dir, drivername)
+        ret = doscmd("<#DBL>" + path + "<#DBL> --version")
         result = ParseDriverVersion(ret)
     fend
     
-    function Firefox(bit)
+    function Firefox(bit, dir = GET_CUR_DIR)
+        drivername = "geckodriver.exe"
+
         select bit
             case 32,64,"32","64"
             default
@@ -878,15 +899,18 @@ module WebDriverDownload
         latest = betweenstr(s.responseText, "<#DBL>name<#DBL>:<#DBL>", "<#DBL>,", 1)
         file_uri = "https://github.com/mozilla/geckodriver/releases/download/" + latest + "/geckodriver-" + latest + "-win" + bit + ".zip"
         r = Request(file_uri, TRUE)
-        if ! Save(r, "geckodriver-" + latest + "-win" + bit + ".zip") then
+        zipname = "geckodriver-" + latest + "-win" + bit + ".zip"
+        if ! Save(r, dir, zipname) then
             result = EMPTY
             exit
         endif
-        if ! UnZip(GET_CUR_DIR + "\geckodriver-" + latest + "-win" + bit + ".zip", "geckodriver.exe") then
+        if ! UnZip(dir, zipname, drivername) then
             result = EMPTY
             exit
         endif
-        ret = doscmd("geckodriver --version")
+
+        path = JoinPath(dir, drivername)
+        ret = doscmd("<#DBL>" + path + "<#DBL> --version")
         result = ParseDriverVersion(ret)
     fend
 
@@ -902,31 +926,50 @@ module WebDriverDownload
         endwith
     fend
     
-    function Save(response, path)
-        with createoleobj("ADODB.Stream")
-            .Open()
-            // .Mode = 2 // adModeWrite
-            .Type = 1 // adTypeBinary
-            .Write(response.responseBody)
-            .SaveToFile(path, 2) //adSaveCreateOverWrite
-            .Close()
-        endwith
-        result = fopen(path, F_EXISTS)
+    function Save(response, dir, name)
+        path = JoinPath(dir, name)
+        try
+            with createoleobj("ADODB.Stream")
+                .Open()
+                // .Mode = 2 // adModeWrite
+                .Type = 1 // adTypeBinary
+                .Write(response.responseBody)
+                .SaveToFile(path, 2) //adSaveCreateOverWrite
+                .Close()
+            endwith
+            result = fopen(path, F_EXISTS)
+        except
+            msgbox("保存できませんでした<#CR>" + path)
+            result = FALSE
+        endtry
     fend
     
-    function UnZip(path, name)
+    function UnZip(dir, zipname, exename)
+        path = JoinPath(dir, zipname)
         with createoleobj("Shell.Application")
             zip = .Namespace(path)
             for file in zip.Items()
-                if file.Name = name then
-                    zip.ParentFolder.CopyHere(file)
+                if file.Name = exename then
+                    zip.ParentFolder.CopyHere(file, $20)
+                    dlg = GETID("", "OperationStatusWindow")
+                    while status(dlg, ST_ISID)
+                        sleep(0.1)
+                    wend
                     break
                 endif
             next
         endwith
-        result = fopen(name, F_EXISTS)
+        exepath = JoinPath(dir, exename)
+        result = fopen(exepath, F_EXISTS)
     fend
     
+    function JoinPath(path, name)
+        with createoleobj("Scripting.FileSystemObject")
+            result = .BuildPath(path, name)
+        endwith
+    fend
+    
+
 endmodule
 
 module Process

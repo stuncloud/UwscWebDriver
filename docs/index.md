@@ -124,17 +124,24 @@ arr.push("piyo")
 
 #### 関数
 
-##### WebDriverDownload.ChromiumEdge()
+##### WebDriverDownload.ChromiumEdge(major[, dir])
 
 新MS Edge(Chromium Edge)用のWebdriverをダウンロードします
 
+- major
+    ダウンロードするmsedgedriverのメジャーバージョン
+    例: 85.0.562.0 であれば 85
+- dir
+    省略可
+    保存先フォルダを指定する
+    デフォルトはカレントディレクトリ
 - 戻り値
     - 成功時  
         msedgedriverのバージョン
     - 失敗時  
         EMPTY
 
-##### WebDriverDownload.EdgeLegacy()
+##### WebDriverDownload.EdgeLegacy([dir])
 
 旧MS Edge用のWebdriverを有効化します
 
@@ -149,31 +156,43 @@ arr.push("piyo")
 chromedriverをダウンロードします
 
 - major
-    操作するGoogle Chromeのメジャーバージョン
+    ダウンロードするchromedriverのメジャーバージョン
     例: 75.0.3770.100 であれば 75
+- dir
+    省略可
+    保存先フォルダを指定する
+    デフォルトはカレントディレクトリ
 - 戻り値
     - 成功時  
         chromedriverのバージョン
     - 失敗時  
         EMPTY
 
-##### WebDriverDownload.Firefox(bit)
+##### WebDriverDownload.Firefox(bit[, dir])
 
 geckodriverをダウンロードします
 
 - bit
     `32`または`64`を指定
     操作するFirefoxに合わせる
+- dir
+    省略可
+    保存先フォルダを指定する
+    デフォルトはカレントディレクトリ
 - 戻り値
     - 成功時  
         geckodriverのバージョン
     - 失敗時  
         EMPTY
 
-##### WebDriverDownload.Dialog()
+##### WebDriverDownload.Dialog([dir])
 
 GUIに従いwebdriverのダウンロード・有効化を行います
 
+- dir
+    省略可
+    保存先フォルダを指定する
+    デフォルトはカレントディレクトリ
 - 戻り値
     - 成功時  
         有効化またはダウンロードしたwebdriverのバージョン
