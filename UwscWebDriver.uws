@@ -71,7 +71,9 @@ module WebDriver
     function Start(driverpath, port = 9515, capabilities = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
-        if ! length(driverversion) then
+        if length(driverversion) > 0 then
+            driverversion = ParseDriverVersion(driverversion)
+        else
             result = null
             msgbox("WebDriverが見つかりません: " + driverpath)
             exit
@@ -119,6 +121,10 @@ module WebDriver
         sleep(2)
         uri = "http://localhost:" + port
         result = CodeObject.WebDriver.Start(uri, capabilities, debug)
+        if result <> NULL then
+            result.version = driverversion
+            result.path    = driverpath
+        endif
     fend
 
     function Remote(remotehost, port, capabilities)
@@ -235,6 +241,8 @@ var WebDriver = function(sessionId, uribase, capabilities) {
     this.capabilities = capabilities;
     var apibase = uribase + '/session/' + this.sessionId;
     this.request = new WebRequest(apibase);
+    this.version = null;
+    this.path = null;
 };
 
 WebDriver.prototype.GetSession = function() {
@@ -242,7 +250,9 @@ WebDriver.prototype.GetSession = function() {
         this.sessionId,
         this.uribase,
         this.GetBrowserName(),
-        this.GetBrowserVersion()
+        this.GetBrowserVersion(),
+        this.path,
+        this.version
     ].join('|');
 };
 
@@ -269,6 +279,11 @@ WebDriver.Connect = function(sessionString, debug) {
         browserName: s[2],
         browserVersion: s[3]
     });
+    if (! d)
+        return null;
+    d.path = s[4]
+    d.version = s[5]
+
     // apiが通れば再接続成功
     var r = d.request.Get('/url');
     if (! r)
@@ -874,19 +889,7 @@ module WebDriverDownload
         ret = doscmd("geckodriver --version")
         result = ParseDriverVersion(ret)
     fend
-    
-    function ParseDriverVersion(str)
-        with createoleobj("VBScript.RegExp")
-            .pattern = "\d+\.\d+\.\d+(\.\d+)?"
-            m = .Execute(str)
-            if m.count then
-                result =  m.item(0).value
-            else
-                result = EMPTY
-            endif
-        endwith
-    fend
-    
+
     function Request(uri, useServerXMLHTTP = FALSE)
         if useServerXMLHTTP then
             result = createoleobj("Msxml2.ServerXMLHTTP")
@@ -969,6 +972,18 @@ module Process
     fend
 
 endmodule
+
+function ParseDriverVersion(str)
+    with createoleobj("VBScript.RegExp")
+        .pattern = "\d+\.\d+\.\d+(\.\d+)?"
+        m = .Execute(str)
+        if m.count then
+            result =  m.item(0).value
+        else
+            result = EMPTY
+        endif
+    endwith
+fend
 
 textblock json2
 //  json2.js

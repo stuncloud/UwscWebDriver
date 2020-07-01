@@ -184,25 +184,37 @@ GUIに従いwebdriverのダウンロード・有効化を行います
 
 WebDriver.Start() が返すオブジェクトです  
 
+#### フィールド
+
+注意：フィールド名は大文字小文字まで一致している必要があります
+
+##### path
+
+使用中のwebdriverのパスを返します
+
+##### version
+
+使用中のwebdriverのバージョンを返します
+
 #### メソッド
 
 注意：メソッド名は大文字小文字まで一致している必要があります
 
-#### GetSession()
+##### GetSession()
 
 現在のwebdriverセッション情報を取得します
 
 - 戻り値  
     セッション情報 (文字列)
 
-#### GetBrowserName()
+##### GetBrowserName()
 
 操作対象ブラウザの名前を取得します
 
 - 戻り値  
     ブラウザ名 (文字列)
 
-#### GetBrowserVersion()
+##### GetBrowserVersion()
 
 操作対象ブラウザのバージョンを取得します
 
