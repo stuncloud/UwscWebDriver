@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.4.1"
+    const MODULE_VERSION = "0.4.2"
 
     dim debug = FALSE
     dim showcmd = TRUE
@@ -361,33 +361,15 @@ WebDriver.prototype.Reload = function() {
 };
 
 WebDriver.prototype.SwitchWindow = function(handleOrName) {
-    var handles = this._getWindowHandles();
     var api = '/window';
-    var body, name
-    if (WebDriver.Contains(handles, handleOrName)) {
-        body = {
-            "handle": handleOrName,
-            "name": ""
-        };
-        this.request.Post(api, body);
-        var r = this.request.Get(api);
-        if (r)
-            return r.value;
-    } else {
-        for (var i = 0; i < handles.length; i++) {
-            body = {
-                "handle": handles[i],
-                "name": handleOrName
-            };
-            this.request.Post(api, body);
-            name = this.ExecuteScript('return window.name;');
-            if (name == handleOrName) {
-                var r = this.request.Get(api);
-                if (r)
-                    return r.value;
-            }
-        }
-    }
+    var body = {
+        "handle": handleOrName,
+        "name": handleOrName
+    };
+    this.request.Post(api, body);
+    var r = this.request.Get(api);
+    if (r)
+        return r.value;
     return null;
 };
 
