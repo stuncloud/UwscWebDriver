@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.4.1"
+    const MODULE_VERSION = "0.5.0"
 
     dim debug = FALSE
     dim showcmd = TRUE
@@ -47,23 +47,23 @@ module WebDriver
         showcmd = FALSE
     fend
 
-    function Chrome(port = 9515, capabilities = ChromeCapabilities)
+    function Chrome(port = 9515, capabilities = ChromeCapabilitiesTemplate)
         result = Start(Chrome, port, capabilities)
     fend
     
-    function ChromiumEdge(port = 9515, capabilities = ChromeCapabilities)
+    function ChromiumEdge(port = 9515, capabilities = EdgeCapabilitiesTemplate)
         result = Start(ChromiumEdge, port, capabilities)
     fend
     
-    function Edge(port = 9515, capabilities = ChromeCapabilities)
+    function Edge(port = 9515, capabilities = EdgeCapabilitiesTemplate)
         result = Start(ChromiumEdge, port, capabilities)
     fend
     
-    function EdgeLegacy(port = 9515, capabilities = EdgeCapabilities)
+    function EdgeLegacy(port = 9515, capabilities = CapabilitiesTemplate)
         result = Start(EdgeLegacy, port, capabilities)
     fend
     
-    function Firefox(port = 9515, capabilities = ChromeCapabilities)
+    function Firefox(port = 9515, capabilities = FirefoxCapabilitiesTemplate)
         result = Start(Firefox, port, capabilities)
     fend
     
@@ -84,22 +84,22 @@ module WebDriver
         select TRUE
             case pos(Chrome, driverpath) > 0
                 if capabilities = EMPTY then
-                    capabilities = ChromeCapabilities
+                    capabilities = ChromeCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(ChromiumEdge, driverpath) > 0
                 if capabilities = EMPTY then
-                    capabilities = ChromeCapabilities
+                    capabilities = EdgeCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(EdgeLegacy, driverpath) > 0
                 if capabilities = EMPTY then
-                    capabilities = EdgeCapabilities
+                    capabilities = CapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(Firefox, driverpath) > 0
                 if capabilities = EMPTY then
-                    capabilities = ChromeCapabilities
+                    capabilities = FirefoxCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " -v"
             default
@@ -159,18 +159,50 @@ module WebDriver
     function ClearLog()
         result = CodeObject.WebDriver.ClearLog()
     fend
-    
-    textblock EdgeCapabilities
-        {
-            "capabilities": {}
-        }
+
+    textblock CapabilitiesTemplate
+{
+    "capabilities": {}
+}
     endtextblock
     
-    textblock ChromeCapabilities
-        {
-            "desiredCapabilities": {},
-            "requiredCapabilities": {}
+    textblock EdgeCapabilitiesTemplate
+{
+    "capabilities": {
+        "alwaysMatch": {
+            "browserName": "msedge",
+            "ms:edgeOptions": {
+                "args": []
+            }
         }
+    }
+}
+    endtextblock
+    
+    textblock ChromeCapabilitiesTemplate
+{
+    "capabilities": {
+        "alwaysMatch": {
+            "browserName": "chrome",
+            "goog:chromeOptions": {
+                "args": []
+            }
+        }
+    }
+}
+    endtextblock
+
+    textblock FirefoxCapabilitiesTemplate
+{
+    "capabilities": {
+        "alwaysMatch": {
+            "browserName": "firefox",
+            "moz:firefoxOptions": {
+                "args": []
+            }
+        }
+    }
+}
     endtextblock
     
     textblock RemoteEdgeCapabilities
@@ -189,7 +221,19 @@ module WebDriver
             }
         }
     endtextblock
-    
+
+    function Option(browser)
+        select browser
+            case "chrome"
+                result = CodeObject.WebDriverOption.New(ChromeCapabilitiesTemplate, "goog:chromeOptions")
+            case "edge", "msedge"
+                result = CodeObject.WebDriverOption.New(EdgeCapabilitiesTemplate, "ms:edgeOptions")
+            case "firefox"
+                result = CodeObject.WebDriverOption.New(FirefoxCapabilitiesTemplate, "moz:firefoxOptions")
+            default
+                msgbox("未サポートブラウザ: " + browser)
+        selend
+    fend
 
     textblock jsStatement
 /* WebRequestオブジェクト */
@@ -752,6 +796,43 @@ WebElement.prototype.SaveScreenshot = function(path) {
 WebElement.prototype.ExecuteScript = function(js, args) {
     return WebDriver.ExecuteScript(this.driverapibase, js, args)
 };
+
+var WebDriverOption = function(template, browseroption) {
+    this.option = JSON.parse(template);
+    this.name = browseroption;
+    this.args = null
+}
+
+WebDriverOption.New = function(template, browseroption) {
+    var opt = new WebDriverOption(template, browseroption);
+    opt.args = new WebDriverOptionArgs(opt.option.capabilities.alwaysMatch[opt.name].args);
+    return opt;
+}
+
+WebDriverOption.prototype.toString = function() {
+    return JSON.stringify(this.option);
+}
+
+var WebDriverOptionArgs = function(args) {
+    this.args = args
+}
+
+WebDriverOptionArgs.prototype.add = function(arg) {
+    this.args.push(arg);
+    return this.args.length;
+}
+
+WebDriverOptionArgs.prototype.remove = function(arg) {
+    var remove = -1;
+    for (i = 1; i < this.args.length; i++) {
+        if (this.args[i] == arg) {
+            remove = i;
+            break;
+        }
+    }
+    this.args.splice(remove, 1);
+    return this.args.length;
+}
 
     endtextblock
     

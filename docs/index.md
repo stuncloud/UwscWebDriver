@@ -613,3 +613,13 @@ WebDriverが返す元々のJavaScriptオブジェクトを得る
 
 - 戻り値  
     jsオブジェクト
+
+## capabilitiesの作成
+
+```php
+opt = WebDriver.Option("chrome") // chrome, edge, firefox のいずれかを指定
+opt.args.add("headless") // 起動オプション(args)にheadlessを追加
+
+// ヘッドレスモードで起動
+headless = WebDriver.Chrome(9515, opt.toString())
+```
