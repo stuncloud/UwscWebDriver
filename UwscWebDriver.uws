@@ -899,8 +899,8 @@ module WebDriverDownload
     function Dialog(dir = GET_CUR_DIR)
         result = EMPTY
         repeat
-            select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択<#CR>保存先：" + dir, "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy", "保存先の変更")
-                case "ChromiumEdge"
+            select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択<#CR>保存先：" + dir, "Chrome", "Firefox", "MsEdge", "保存先の変更")
+                case "MsEdge"
                     ver = input("Chromium Edgeのメジャーバージョンを入力<#CR>例: 83")
                     if length(val(ver, EMPTY))
                         result = ChromiumEdge(ver, dir)
@@ -915,8 +915,6 @@ module WebDriverDownload
                     if bit <> -1 then
                         result = Firefox(replace(bit, "bit", ""), dir)
                     endif
-                case "EdgeLegacy"
-                    result = EdgeLegacy()
                 case "保存先の変更"
                     curdir = GET_CUR_DIR
                     with createoleobj("Shell.Application")
