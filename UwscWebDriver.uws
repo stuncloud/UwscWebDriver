@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.5.0"
+    const MODULE_VERSION = "0.6.0"
 
     dim debug = FALSE
     dim showcmd = TRUE
@@ -47,28 +47,28 @@ module WebDriver
         showcmd = FALSE
     fend
 
-    function Chrome(port = 9515, capabilities = ChromeCapabilitiesTemplate)
-        result = Start(Chrome, port, capabilities)
+    function Chrome(port = 9515, option = ChromeCapabilitiesTemplate)
+        result = Start(Chrome, port, option)
     fend
     
-    function ChromiumEdge(port = 9515, capabilities = EdgeCapabilitiesTemplate)
-        result = Start(ChromiumEdge, port, capabilities)
+    function ChromiumEdge(port = 9515, option = EdgeCapabilitiesTemplate)
+        result = Start(ChromiumEdge, port, option)
     fend
     
-    function Edge(port = 9515, capabilities = EdgeCapabilitiesTemplate)
-        result = Start(ChromiumEdge, port, capabilities)
+    function Edge(port = 9515, option = EdgeCapabilitiesTemplate)
+        result = Start(ChromiumEdge, port, option)
     fend
     
-    function EdgeLegacy(port = 9515, capabilities = CapabilitiesTemplate)
-        result = Start(EdgeLegacy, port, capabilities)
+    function EdgeLegacy(port = 9515, option = CapabilitiesTemplate)
+        result = Start(EdgeLegacy, port, option)
     fend
     
-    function Firefox(port = 9515, capabilities = FirefoxCapabilitiesTemplate)
-        result = Start(Firefox, port, capabilities)
+    function Firefox(port = 9515, option = FirefoxCapabilitiesTemplate)
+        result = Start(Firefox, port, option)
     fend
     
 
-    function Start(driverpath, port = 9515, capabilities = EMPTY)
+    function Start(driverpath, port = 9515, option = EMPTY)
         driverversion = trim(doscmd(driverpath + " --version 2> NUL"))
 
         if length(driverversion) > 0 then
@@ -80,34 +80,50 @@ module WebDriver
         endif
 
         dim verbose = ""
-
         select TRUE
             case pos(Chrome, driverpath) > 0
-                if capabilities = EMPTY then
+                if option = EMPTY then
                     capabilities = ChromeCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(ChromiumEdge, driverpath) > 0
-                if capabilities = EMPTY then
+                if option = EMPTY then
                     capabilities = EdgeCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(EdgeLegacy, driverpath) > 0
-                if capabilities = EMPTY then
+                if option = EMPTY then
                     capabilities = CapabilitiesTemplate
                 endif
                 if this.debug then verbose = " --verbose"
             case pos(Firefox, driverpath) > 0
-                if capabilities = EMPTY then
+                if option = EMPTY then
                     capabilities = FirefoxCapabilitiesTemplate
                 endif
                 if this.debug then verbose = " -v"
             default
-                if capabilities = EMPTY then
+                if option = EMPTY then
                     msgbox("Capabilityを指定してください")
                     exitexit
                 endif
         selend
+        // capabilitiesが指定されていた場合
+        if option <> EMPTY then
+            select vartype(option)
+                case VAR_DISPATCH
+                    try
+                        capabilities = option.toCapabilities()
+                    except
+                        msgbox("WebDriverOptionオブジェクトではありません")
+                        exitexit
+                    endtry
+                case VAR_ASTR, VAR_USTR
+                    capabilities = option
+                default
+                    msgbox("正しいCapabilityを指定してください")
+                    exitexit
+            selend
+        endif
         
         cmd = "<#DBL>" + driverpath + "<#DBL> --port=" + port + verbose
         if ! Process.Find(cmd) then
@@ -235,7 +251,7 @@ module WebDriver
         selend
     fend
 
-    textblock jsStatement
+textblock jsStatement
 /* WebRequestオブジェクト */
 var WebRequest = function(uribase) {
     this.uribase = uribase;
@@ -809,7 +825,7 @@ WebDriverOption.New = function(template, browseroption) {
     return opt;
 }
 
-WebDriverOption.prototype.toString = function() {
+WebDriverOption.prototype.toCapabilities = function() {
     return JSON.stringify(this.option);
 }
 
@@ -834,7 +850,7 @@ WebDriverOptionArgs.prototype.remove = function(arg) {
     return this.args.length;
 }
 
-    endtextblock
+endtextblock
     
     function GetError()
         result = ""
@@ -852,6 +868,31 @@ WebDriverOptionArgs.prototype.remove = function(arg) {
         endwith
     fend
 
+endmodule
+
+module By
+    function Id(id)
+        result = "#" + id
+    fend
+    function Class(cls, cls2=EMPTY, cls3=EMPTY, cls4=EMPTY, cls5=EMPTY, cls6=EMPTY, cls7=EMPTY, cls8=EMPTY, cls9=EMPTY, cls10=EMPTY)
+        result = "." + cls
+        for i = 2 to 10
+            c = eval("cls" + i)
+            if length(c) then
+                result = result + "." + c
+            endif
+        next
+    fend
+    function Tag(tag="*")
+        result = tag
+    fend
+    function Attribute(name, value=EMPTY)
+        result = "[" + name
+        if length(value) then
+            result = result + "=<#DBL>" + value + "<#DBL>"
+        endif
+        result = result + "]"
+    fend
 endmodule
 
 module WebDriverDownload
@@ -1063,7 +1104,7 @@ module Process
     function Find(cmd)
         service = locator.ConnectServer()
         cmd = replace(cmd, "\", "\\")
-        q = service.ExecQuery("select CommandLine from win32_process where CommandLine like '%" + cmd + "%'")
+                q = service.ExecQuery("select CommandLine from win32_process where CommandLine like '%" + cmd + "%'")
         result = q.Count
     fend
     
