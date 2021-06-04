@@ -12,15 +12,13 @@ select slctbox(SLCT_BTN, 0, "操作を選択", "ブラウザ操作を試す", "W
         exit
 selend
 
-select slctbox(SLCT_BTN or SLCT_STR, 0, "ブラウザを選択", "Chrome", "Firefox", "ChromiumEdge", "EdgeLegacy")
+select slctbox(SLCT_BTN or SLCT_STR, 0, "ブラウザを選択", "Chrome", "Firefox", "MsEdge")
     case "Chrome"
         driver = WebDriver.Chrome()
     case "Firefox"
         driver = WebDriver.Firefox()
     case "ChromiumEdge"
-        driver = WebDriver.ChromiumEdge()
-    case "EdgeLegacy"
-        driver = WebDriver.EdgeLegacy()
+        driver = WebDriver.Edge()
     default
         exit
 selend
