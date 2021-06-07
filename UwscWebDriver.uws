@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.6.0"
+    const MODULE_VERSION = "0.7.0"
 
     dim debug = FALSE
     dim showcmd = TRUE
@@ -386,20 +386,33 @@ WebDriver.ConvertToSafeArray = function(arr) {
     return dictionary.Items();
 }
 
+WebDriver.prototype.getbrowsername = 
+WebDriver.prototype.GETBROWSERNAME = 
+WebDriver.prototype.GetBrowserName = 
 WebDriver.prototype.GetBrowserName = function() {
     return this.capabilities.browserName;
 };
 
+WebDriver.prototype.get_browser_version = 
+WebDriver.prototype.getbrowserversion = 
+WebDriver.prototype.GETBROWSERVERSION = 
+WebDriver.prototype.getBrowserVersion = 
 WebDriver.prototype.GetBrowserVersion = function() {
     return this.capabilities.browserVersion || this.capabilities.version;
 };
 
+WebDriver.prototype.set_implicit_wait = 
+WebDriver.prototype.setImplicitWait =
+WebDriver.prototype.setimplicitwait = 
+WebDriver.prototype.SETIMPLICITWAIT = 
 WebDriver.prototype.SetImplicitWait = function(millisec) {
     var api = '/timeouts';
     var body = {"implicit": millisec};
     return this.request.Post(api, body);
 };
 
+WebDriver.prototype.navigate =
+WebDriver.prototype.NAVIGATE =
 WebDriver.prototype.Navigate = function(url, target) {
     var api = '/url';
     var body = {"url": url};
@@ -414,12 +427,18 @@ WebDriver.prototype.Navigate = function(url, target) {
     return this.ExecuteScript(js, [url, target]);
 };
 
+WebDriver.prototype.reload =
+WebDriver.prototype.RELOAD =
 WebDriver.prototype.Reload = function() {
     var api = '/refresh';
     var body = {"url": ""};
     this.request.Post(api, body);
 };
 
+WebDriver.prototype.switch_window =
+WebDriver.prototype.switchWindow =
+WebDriver.prototype.switchwindow =
+WebDriver.prototype.SWITCHWINDOW =
 WebDriver.prototype.SwitchWindow = function(handleOrName) {
     var handles = this._getWindowHandles();
     var api = '/window';
@@ -451,6 +470,10 @@ WebDriver.prototype.SwitchWindow = function(handleOrName) {
     return null;
 };
 
+WebDriver.prototype.get_current_window_handle =
+WebDriver.prototype.getCurrentWindowHandle =
+WebDriver.prototype.getcurrentwindowhandle =
+WebDriver.prototype.GETCURRENTWINDOWHANDLE =
 WebDriver.prototype.GetCurrentWindowHandle = function() {
     var api = '/window';
     var r = this.request.Get(api);
@@ -465,11 +488,19 @@ WebDriver.prototype._getWindowHandles = function() {
     return [];
 };
 
+WebDriver.prototype.get_window_handles =
+WebDriver.prototype.getWindowHandles =
+WebDriver.prototype.getwindowhandles =
+WebDriver.prototype.GETWINDOWHANDLES =
 WebDriver.prototype.GetWindowHandles = function() {
     var handles = this._getWindowHandles();
     return WebDriver.ConvertToSafeArray(handles);
 };
 
+WebDriver.prototype.get_url =
+WebDriver.prototype.getUrl =
+WebDriver.prototype.geturl =
+WebDriver.prototype.GETURL =
 WebDriver.prototype.GetUrl = function() {
     var api = '/url';
     var r = this.request.Get(api);
@@ -477,6 +508,10 @@ WebDriver.prototype.GetUrl = function() {
         return r.value;
 };
 
+WebDriver.prototype.get_title =
+WebDriver.prototype.getTitle =
+WebDriver.prototype.gettitle =
+WebDriver.prototype.GETTITLE =
 WebDriver.prototype.GetTitle = function() {
     var api = '/title';
     var r = this.request.Get(api);
@@ -484,6 +519,10 @@ WebDriver.prototype.GetTitle = function() {
         return r.value;
 };
 
+WebDriver.prototype.get_source =
+WebDriver.prototype.getSource =
+WebDriver.prototype.getsource =
+WebDriver.prototype.GETSOURCE =
 WebDriver.prototype.GetSource = function() {
     var api = '/source';
     var r = this.request.Get(api);
@@ -535,6 +574,10 @@ WebDriver.prototype.find_multi_elem = function(body) {
     return dictionary.Items();
 };
 
+WebDriver.prototype.find_element =
+WebDriver.prototype.findElement =
+WebDriver.prototype.findelement =
+WebDriver.prototype.FINDELEMENT =
 WebDriver.prototype.FindElement = function(selector) {
     var body = {
         "using": "css selector",
@@ -543,6 +586,10 @@ WebDriver.prototype.FindElement = function(selector) {
     return this.find_single_elem(body);
 };
 
+WebDriver.prototype.find_elements =
+WebDriver.prototype.findElements =
+WebDriver.prototype.findelements =
+WebDriver.prototype.FINDELEMENTS =
 WebDriver.prototype.FindElements = function(selector) {
     var body = {
         "using": "css selector",
@@ -551,10 +598,18 @@ WebDriver.prototype.FindElements = function(selector) {
     return this.find_multi_elem(body);
 };
 
+WebDriver.prototype.find_elements_by_name =
+WebDriver.prototype.findElementsByName =
+WebDriver.prototype.findelementsbyname =
+WebDriver.prototype.FINDELEMENTSBYNAME =
 WebDriver.prototype.FindElementsByName = function(name) {
     return this.FindElements('*[name="' + name + '"]');
 };
 
+WebDriver.prototype.find_element_by_x_path =
+WebDriver.prototype.findElementByXPath =
+WebDriver.prototype.findelementbyxpath =
+WebDriver.prototype.FINDELEMENTBYXPATH =
 WebDriver.prototype.FindElementByXPath = function(xpath) {
     var body = {
         "using": "xpath",
@@ -563,6 +618,10 @@ WebDriver.prototype.FindElementByXPath = function(xpath) {
     return this.find_single_elem(body);
 };
 
+WebDriver.prototype.find_elements_by_x_path =
+WebDriver.prototype.findElementsByXPath =
+WebDriver.prototype.findelementsbyxpath =
+WebDriver.prototype.FINDELEMENTSBYXPATH =
 WebDriver.prototype.FindElementsByXPath = function(xpath) {
     var body = {
         "using": "xpath",
@@ -571,11 +630,17 @@ WebDriver.prototype.FindElementsByXPath = function(xpath) {
     return this.find_multi_elem(body);
 };
 
+WebDriver.prototype.close =
+WebDriver.prototype.CLOSE =
 WebDriver.prototype.Close = function() {
     var api = '';
     this.request.Delete(api);
 };
 
+WebDriver.prototype.get_dialog_text =
+WebDriver.prototype.getDialogText =
+WebDriver.prototype.getdialogtext =
+WebDriver.prototype.GETDIALOGTEXT =
 WebDriver.prototype.GetDialogText = function() {
     var api = '/alert/text';
     var r = this.request.Get(api);
@@ -586,6 +651,10 @@ WebDriver.prototype.GetDialogText = function() {
     }
 };
 
+WebDriver.prototype.set_dialog_text =
+WebDriver.prototype.setDialogText =
+WebDriver.prototype.setdialogtext =
+WebDriver.prototype.SETDIALOGTEXT =
 WebDriver.prototype.SetDialogText = function(value) {
     var api = '/alert/text';
     var body = {
@@ -595,18 +664,30 @@ WebDriver.prototype.SetDialogText = function(value) {
     this.request.Post(api, body);
 };
 
+WebDriver.prototype.accept_dialog =
+WebDriver.prototype.acceptDialog =
+WebDriver.prototype.acceptdialog =
+WebDriver.prototype.ACCEPTDIALOG =
 WebDriver.prototype.AcceptDialog = function() {
     var api = '/alert/accept';
     var body = {};
     this.request.Post(api, body);
 };
 
+WebDriver.prototype.dismiss_dialog =
+WebDriver.prototype.dismissDialog =
+WebDriver.prototype.dismissdialog =
+WebDriver.prototype.DISMISSDIALOG =
 WebDriver.prototype.DismissDialog = function() {
     var api = '/alert/dismiss';
     var body = {};
     this.request.Post(api, body);
 };
 
+WebDriver.prototype.save_screenshot =
+WebDriver.prototype.saveScreenshot =
+WebDriver.prototype.savescreenshot =
+WebDriver.prototype.SAVESCREENSHOT =
 WebDriver.prototype.SaveScreenshot = function(path) {
     var api = '/screenshot';
     var r = this.request.Get(api);
@@ -625,6 +706,10 @@ WebDriver.ExecuteScript = function(driverapibase, js, args) {
         return r.value;
 };
 
+WebDriver.prototype.execute_script =
+WebDriver.prototype.executeScript =
+WebDriver.prototype.executescript =
+WebDriver.prototype.EXECUTESCRIPT =
 WebDriver.prototype.ExecuteScript = function(js, args) {
     return WebDriver.ExecuteScript(this.request.uribase, js, args)
 };
@@ -644,6 +729,10 @@ WebDriver._saveScreenshot = function(base64, path) {
     stream.Close()
 }
 
+WebDriver.prototype.get_rect =
+WebDriver.prototype.getRect =
+WebDriver.prototype.getrect =
+WebDriver.prototype.GETRECT =
 WebDriver.prototype.GetRect = function() {
     var api = '/window/rect';
     var r = this.request.Get(api);
@@ -651,6 +740,10 @@ WebDriver.prototype.GetRect = function() {
         return r.value;
 };
 
+WebDriver.prototype.set_rect =
+WebDriver.prototype.setRect =
+WebDriver.prototype.setrect =
+WebDriver.prototype.SETRECT =
 WebDriver.prototype.SetRect = function(width, height, x, y) {
     var api = '/window/rect';
     var body = {
@@ -664,6 +757,8 @@ WebDriver.prototype.SetRect = function(width, height, x, y) {
         return r.value;
 };
 
+WebDriver.prototype.maximize =
+WebDriver.prototype.MAXIMIZE =
 WebDriver.prototype.Maximize = function() {
     var api = '/window/maximize';
     var body = {}
@@ -672,6 +767,8 @@ WebDriver.prototype.Maximize = function() {
         return r.value;
 };
 
+WebDriver.prototype.minimize =
+WebDriver.prototype.MINIMIZE =
 WebDriver.prototype.Minimize = function() {
     var api = '/window/minimize';
     var body = {}
@@ -680,6 +777,8 @@ WebDriver.prototype.Minimize = function() {
         return r.value;
 };
 
+WebDriver.prototype.fullscreen =
+WebDriver.prototype.FULLSCREEN =
 WebDriver.prototype.Fullscreen = function() {
     var api = '/window/fullscreen';
     var body = {}
@@ -697,22 +796,32 @@ var WebElement = function(driverapibase, elementId, elementObject) {
     this.request = new WebRequest(elementapibase)
 };
 
-WebElement.prototype.raw = function() {
+WebElement.prototype.raw =
+WebElement.prototype.RAW =
+WebElement.prototype.Raw = function() {
     return this.object;
 };
 
+WebElement.prototype.click =
+WebElement.prototype.CLICK =
 WebElement.prototype.Click = function() {
     var api = '/click';
     var body = {};
     this.request.Post(api, body);
 };
 
+WebElement.prototype.clear =
+WebElement.prototype.CLEAR =
 WebElement.prototype.Clear = function() {
     var api = '/clear';
     var body = {};
     this.request.Post(api, body);
 };
 
+WebElement.prototype.set_value =
+WebElement.prototype.setValue =
+WebElement.prototype.setvalue =
+WebElement.prototype.SETVALUE =
 WebElement.prototype.SetValue = function(value) {
     var api = '/value';
     var body = {
@@ -722,10 +831,18 @@ WebElement.prototype.SetValue = function(value) {
     this.request.Post(api, body);
 };
 
+WebElement.prototype.get_value =
+WebElement.prototype.getValue =
+WebElement.prototype.getvalue =
+WebElement.prototype.GETVALUE =
 WebElement.prototype.GetValue = function() {
     return this.GetAttribute('value');
 };
 
+WebElement.prototype.get_text =
+WebElement.prototype.getText =
+WebElement.prototype.gettext =
+WebElement.prototype.GETTEXT =
 WebElement.prototype.GetText = function() {
     var api = '/text';
     var r = this.request.Get(api);
@@ -733,6 +850,10 @@ WebElement.prototype.GetText = function() {
         return r.value;
 };
 
+WebElement.prototype.get_attribute =
+WebElement.prototype.getAttribute =
+WebElement.prototype.getattribute =
+WebElement.prototype.GETATTRIBUTE =
 WebElement.prototype.GetAttribute = function(attribute) {
     var api = '/attribute/' + attribute;
     var body = {};
@@ -744,6 +865,10 @@ WebElement.prototype.GetAttribute = function(attribute) {
     return this.ExecuteScript(js, args);
 };
 
+WebElement.prototype.is_selected =
+WebElement.prototype.isSelected =
+WebElement.prototype.isselected =
+WebElement.prototype.ISSELECTED =
 WebElement.prototype.IsSelected = function() {
     var api = '/selected';
     var r = this.request.Get(api);
@@ -751,6 +876,10 @@ WebElement.prototype.IsSelected = function() {
         return r.value;
 };
 
+WebElement.prototype.find_element =
+WebElement.prototype.findElement =
+WebElement.prototype.findelement =
+WebElement.prototype.FINDELEMENT =
 WebElement.prototype.FindElement = function(selector) {
     var api = '/element';
     var body = {
@@ -775,6 +904,10 @@ WebElement.prototype.FindElement = function(selector) {
     return element;
 };
 
+WebElement.prototype.find_elements =
+WebElement.prototype.findElements =
+WebElement.prototype.findelements =
+WebElement.prototype.FINDELEMENTS =
 WebElement.prototype.FindElements = function(selector) {
     var api = '/elements';
     var body = {
@@ -803,12 +936,20 @@ WebElement.prototype.FindElements = function(selector) {
     return dictionary.Items();
 };
 
+WebElement.prototype.save_screenshot =
+WebElement.prototype.saveScreenshot =
+WebElement.prototype.savescreenshot =
+WebElement.prototype.SAVESCREENSHOT =
 WebElement.prototype.SaveScreenshot = function(path) {
     var api = '/screenshot'
     var r = this.request.Get(api);
     WebDriver._saveScreenshot(r.value, path);
 };
 
+WebElement.prototype.execute_script =
+WebElement.prototype.executeScript =
+WebElement.prototype.executescript =
+WebElement.prototype.EXECUTESCRIPT =
 WebElement.prototype.ExecuteScript = function(js, args) {
     return WebDriver.ExecuteScript(this.driverapibase, js, args)
 };
@@ -821,7 +962,9 @@ var WebDriverOption = function(template, browseroption) {
 
 WebDriverOption.New = function(template, browseroption) {
     var opt = new WebDriverOption(template, browseroption);
-    opt.args = new WebDriverOptionArgs(opt.option.capabilities.alwaysMatch[opt.name].args);
+    opt.args = 
+    opt.ARGS = 
+    opt.Args = new WebDriverOptionArgs(opt.option.capabilities.alwaysMatch[opt.name].args);
     return opt;
 }
 
@@ -833,12 +976,16 @@ var WebDriverOptionArgs = function(args) {
     this.args = args
 }
 
-WebDriverOptionArgs.prototype.add = function(arg) {
+WebDriverOptionArgs.prototype.add =
+WebDriverOptionArgs.prototype.ADD =
+WebDriverOptionArgs.prototype.Add = function(arg) {
     this.args.push(arg);
     return this.args.length;
 }
 
-WebDriverOptionArgs.prototype.remove = function(arg) {
+WebDriverOptionArgs.prototype.remove =
+WebDriverOptionArgs.prototype.REMOVE =
+WebDriverOptionArgs.prototype.Remove = function(arg) {
     var remove = -1;
     for (i = 1; i < this.args.length; i++) {
         if (this.args[i] == arg) {
