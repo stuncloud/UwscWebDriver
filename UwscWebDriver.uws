@@ -1,6 +1,6 @@
 
 module WebDriver
-    const MODULE_VERSION = "0.7.0"
+    const MODULE_VERSION = "0.7.1"
 
     dim debug = FALSE
     dim showcmd = TRUE
@@ -1043,42 +1043,62 @@ module By
 endmodule
 
 module WebDriverDownload
-    function Dialog(dir = GET_CUR_DIR)
+    dim DownloadDir = GET_CUR_DIR
+    function Dialog(dir = DownloadDir)
         result = EMPTY
         repeat
-            select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択<#CR>保存先：" + dir, "Chrome", "Firefox", "MsEdge", "保存先の変更")
+            select slctbox(SLCT_BTN or SLCT_STR, 0, "ダウンロードするWebdriverを選択<#CR>保存先：" + dir, "MsEdge", "Chrome", "Firefox", "保存先の変更")
                 case "MsEdge"
-                    ver = input("Chromium Edgeのメジャーバージョンを入力<#CR>例: 83")
-                    if length(val(ver, EMPTY))
-                        result = ChromiumEdge(ver, dir)
+                    ver = input("Chromium Edgeのメジャーバージョンを入力 (例: 91)<#CR>空欄にした場合は最新版をダウンロードします")
+                    if length(ver) = 0 and ver <> EMPTY then
+                    else
+                        ver = val(ver, EMPTY)
                     endif
+                    result = MsEdge(ver, dir)
                 case "Chrome"
-                    ver = input("Google Chromeのメジャーバージョンを入力<#CR>例: 75")
-                    if length(val(ver, EMPTY))
-                        result = Chrome(ver, dir)
+                    ver = input("Google Chromeのメジャーバージョンを入力 (例: 91)<#CR>空欄にした場合は最新版をダウンロードします")
+                    if length(ver) = 0 and ver <> EMPTY then
+                    else
+                        ver = val(ver, EMPTY)
                     endif
+                    result = Chrome(ver, dir)
                 case "Firefox"
                     bit = slctbox(SLCT_BTN or SLCT_STR, 0, "Firefox<#CR>選択してください", "32bit", "64bit")
                     if bit <> -1 then
                         result = Firefox(replace(bit, "bit", ""), dir)
                     endif
                 case "保存先の変更"
-                    curdir = GET_CUR_DIR
-                    with createoleobj("Shell.Application")
-                        folder = .BrowseForFolder(0, "WebDriverの保存先を選択", $50, "")
-                        if folder <> NOTHING then
-                            dir = folder.self.path
-                        endif
-                        def_dll SetCurrentDirectoryA(string):bool:kernel32
-                        SetCurrentDirectoryA(curdir)
-                    endwith
+                    dir = SetDownloadDir(dir, TRUE)
                 default
                     exit
             selend
         until result <> EMPTY
     fend
 
-    function ChromiumEdge(ver, dir = GET_CUR_DIR)
+    function SetDownloadDir(dir, gui = false)
+        if gui then
+            curdir = GET_CUR_DIR
+            with createoleobj("Shell.Application")
+                folder = .BrowseForFolder(0, "WebDriverの保存先を選択", $50, "")
+                if folder <> NOTHING then
+                    result = folder.self.path
+                endif
+                SetCurrentDirectoryA(curdir)
+            endwith
+        else
+            result = dir
+        endif
+        DownloadDir = result
+    fend
+    def_dll SetCurrentDirectoryA(string):bool:kernel32
+    
+
+    function ChromiumEdge(ver = EMPTY, dir = DownloadDir)
+        result = MsEdge(ver, dir)
+    fend
+    
+
+    function MsEdge(ver = EMPTY, dir = DownloadDir)
         drivername = "msedgedriver.exe"
         result = EMPTY
         arc = "32"
@@ -1086,22 +1106,29 @@ module WebDriverDownload
             arc = "64"
         endif
 
+
         dl_page_url = "https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/"
         r = Request(dl_page_url)
-
-        u1 = "https://msedgedriver.azureedge.net/" + ver
+        u1 = "https://msedgedriver.azureedge.net/"
         u2 = "/edgedriver_win" + arc + ".zip"
-        v = betweenstr(r.responseText, u1, u2, 1)
+        if length(ver) then
+            v = betweenstr(r.responseText, u1 + ver, u2, 1)
+            v2 = betweenstr(v, u1, "", 1)
+            if length(v2) then
+                v = v2
+            endif
+        else
+            stable_label = "Current general public release channel."
+            stable_end = ":  <a "
+            v = betweenstr(betweenstr(r.responseText, stable_label, stable_end), "Version: ")
+        endif
+
 
         if length(v) = 0 then
             msgbox("指定バージョン("+ ver +")が見つかりませんでした")
             exit
         endif
 
-        v2 = betweenstr(v, u1, "", 1)
-        if length(v2) then
-            v = v2
-        endif
 
         file_url = u1 + v + u2
         r = Request(file_url)
@@ -1130,10 +1157,13 @@ module WebDriverDownload
         result = ParseDriverVersion(ret)
     fend
     
-    function Chrome(major, dir = GET_CUR_DIR)
+    function Chrome(major = EMPTY, dir = DownloadDir)
         drivername = "chromedriver.exe"
-
-        latest_uri = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_" + major
+        if length(major) then
+            latest_uri = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_" + major
+        else
+            latest_uri = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE"
+        endif
         r = Request(latest_uri)
         v = trim(r.responseText)
         file_uri = "https://chromedriver.storage.googleapis.com/" + v + "/chromedriver_win32.zip"
@@ -1152,7 +1182,7 @@ module WebDriverDownload
         result = ParseDriverVersion(ret)
     fend
     
-    function Firefox(bit, dir = GET_CUR_DIR)
+    function Firefox(bit, dir = DownloadDir)
         drivername = "geckodriver.exe"
 
         select bit
